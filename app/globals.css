@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Brand tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --color-cream: #faf7f2;
+  --color-ink: #1a1714;
+  --color-ink-muted: #6b6460;
+  --color-amber: #c8893a;
+  --color-amber-light: #f0d4a8;
+  --color-surface: #f2ede5;
+
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography helpers ───────────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ── Selection ────────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--color-amber-light);
+  color: var(--color-ink);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-amber-light);
+  border-radius: 3px;
+}
+
+/* ── Utility classes ──────────────────────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-7 py-3.5 rounded-full
+           bg-[var(--color-ink)] text-[var(--color-cream)] text-sm font-semibold
+           tracking-wide transition-all duration-200
+           hover:bg-[var(--color-amber)] hover:text-[var(--color-ink)]
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-amber)];
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-7 py-3.5 rounded-full
+           border border-[var(--color-ink)] text-[var(--color-ink)] text-sm font-semibold
+           tracking-wide transition-all duration-200
+           hover:bg-[var(--color-ink)] hover:text-[var(--color-cream)]
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-amber)];
+  }
+
+  .btn-amber {
+    @apply inline-flex items-center justify-center px-7 py-3.5 rounded-full
+           bg-[var(--color-amber)] text-white text-sm font-semibold
+           tracking-wide transition-all duration-200
+           hover:brightness-110
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-amber)];
+  }
+
+  .container-site {
+    @apply max-w-6xl mx-auto px-5 sm:px-8;
+  }
+
+  .section-label {
+    @apply text-xs font-semibold tracking-[0.2em] uppercase text-[var(--color-amber)];
+  }
+
+  .heading-display {
+    font-family: var(--font-display);
+    @apply font-bold leading-tight text-[var(--color-ink)];
+  }
+
+  .card-surface {
+    @apply bg-[var(--color-surface)] rounded-2xl;
+  }
+}
