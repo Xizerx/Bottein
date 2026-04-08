@@ -99,6 +99,70 @@ body {
   animation: bottleShimmer 3s ease-in-out infinite;
 }
 
+/* ── B&W theme overrides (feature/bw-theme branch) ───────────────────────── */
+html.bw {
+  --color-cream:      #ffffff;
+  --color-ink:        #000000;
+  --color-ink-muted:  #222222;
+  --color-amber:      #000000;
+  --color-amber-light:#f5f5f5;
+  --color-surface:    #f5f5f5;
+
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-sans:    "Space Grotesk", "Inter", system-ui, sans-serif;
+
+  --bottle-liquid:  rgba(0, 0, 0, 0.15);
+  --bottle-stroke:  rgba(0, 0, 0, 0.55);
+  --bottle-shimmer: rgba(255, 255, 255, 0.60);
+}
+
+/* Sharp corners across all components */
+html.bw *,
+html.bw *::before,
+html.bw *::after {
+  border-radius: 2px !important;
+}
+
+/* 2px black borders on interactive elements */
+html.bw .btn-primary,
+html.bw .btn-outline,
+html.bw .btn-amber {
+  border: 2px solid #000 !important;
+  border-radius: 2px !important;
+}
+
+html.bw .btn-primary {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+html.bw .btn-primary:hover {
+  background: #222 !important;
+  color: #fff !important;
+}
+
+html.bw .btn-outline {
+  background: transparent !important;
+  color: #000 !important;
+}
+
+html.bw .btn-outline:hover {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+/* Black focus ring instead of gold */
+html.bw *:focus-visible {
+  outline: 2px solid #000 !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+html.bw select:focus {
+  border-color: #000 !important;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.15) !important;
+}
+
 /* ── Utility classes ──────────────────────────────────────────────────────── */
 @layer components {
   .btn-primary {
