@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useState } from "react";
+import { useReducer, useState, useEffect } from "react";
 import Link from "next/link";
 import QuizStep, { OptionTile } from "@/components/QuizStep";
 import type { QuizAnswers, Goal, ProteinBase, FlavorOption, ActivityLevel } from "@/lib/types";
@@ -13,6 +13,7 @@ const initialAnswers: QuizAnswers = {
   allergies: [],
   flavors: [],
   age: null,
+  height: null,
   weight: null,
   activityLevel: null,
 };
@@ -22,8 +23,9 @@ type QuizAction =
   | { type: "SET_PROTEIN"; base: ProteinBase }
   | { type: "TOGGLE_ALLERGY"; allergy: string }
   | { type: "TOGGLE_FLAVOR"; flavor: FlavorOption }
-  | { type: "SET_AGE"; age: number }
-  | { type: "SET_WEIGHT"; weight: number }
+  | { type: "SET_AGE"; age: string }
+  | { type: "SET_HEIGHT"; height: string }
+  | { type: "SET_WEIGHT"; weight: string }
   | { type: "SET_ACTIVITY"; level: ActivityLevel };
 
 function quizReducer(state: QuizAnswers, action: QuizAction): QuizAnswers {
@@ -48,10 +50,12 @@ function quizReducer(state: QuizAnswers, action: QuizAction): QuizAnswers {
       if (state.flavors.includes(action.flavor)) {
         return { ...state, flavors: state.flavors.filter((f) => f !== action.flavor) };
       }
-      if (state.flavors.length >= 3) return state; // max 3
+      if (state.flavors.length >= 3) return state;
       return { ...state, flavors: [...state.flavors, action.flavor] };
     case "SET_AGE":
       return { ...state, age: action.age };
+    case "SET_HEIGHT":
+      return { ...state, height: action.height };
     case "SET_WEIGHT":
       return { ...state, weight: action.weight };
     case "SET_ACTIVITY":
@@ -63,11 +67,22 @@ function quizReducer(state: QuizAnswers, action: QuizAction): QuizAnswers {
 
 // ── Data ───────────────────────────────────────────────────────────────────
 
-const GOALS: { id: Goal; icon: string; label: string; desc: string }[] = [
-  { id: "focus", icon: "🎯", label: "Focus & Cognition", desc: "Sharpen mental clarity and sustained attention" },
-  { id: "sleep", icon: "🌙", label: "Sleep & Recovery", desc: "Wind down faster, wake up restored" },
-  { id: "fitness", icon: "💪", label: "Fitness & Strength", desc: "Build muscle, improve endurance" },
-  { id: "skincare", icon: "✨", label: "Skin & Beauty", desc: "Collagen, hydration, glow from within" },
+const GOALS: { id: Goal; icon: React.ReactNode; label: string; desc: string }[] = [
+  {
+    id: "weight_loss",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2C8 2 4 6 4 10c0 5 6 10 8 12 2-2 8-7 8-12 0-4-4-8-8-8z" />
+        <path d="M12 6c-1.5 0-3 1.5-3 3" />
+      </svg>
+    ),
+    label: "Appetite Control",
+    desc: "Feel fuller, manage cravings",
+  },
+  { id: "focus", icon: "🎯", label: "Focus and Cognition", desc: "Sharpen mental clarity and sustained attention" },
+  { id: "sleep", icon: "🌙", label: "Sleep and Recovery", desc: "Wind down faster, wake up restored" },
+  { id: "fitness", icon: "💪", label: "Fitness and Strength", desc: "Build muscle, improve endurance" },
+  { id: "skincare", icon: "✨", label: "Skin and Beauty", desc: "Collagen, hydration, glow from within" },
   { id: "wellness", icon: "🌿", label: "General Wellness", desc: "Balanced daily nutrition foundation" },
 ];
 
@@ -82,29 +97,123 @@ const FLAVORS: { id: FlavorOption; icon: string; label: string }[] = [
 
 const ACTIVITIES: { id: ActivityLevel; label: string; desc: string }[] = [
   { id: "sedentary", label: "Sedentary", desc: "Mostly desk work, minimal exercise" },
-  { id: "light", label: "Light", desc: "1–3 workouts per week" },
-  { id: "moderate", label: "Moderate", desc: "3–5 workouts per week" },
+  { id: "light", label: "Light", desc: "1-3 workouts per week" },
+  { id: "moderate", label: "Moderate", desc: "3-5 workouts per week" },
   { id: "active", label: "Active", desc: "Daily movement, intense training" },
   { id: "very_active", label: "Very Active", desc: "Athlete or physical profession" },
 ];
 
 const ALLERGIES = ["Dairy", "Gluten", "Soy", "Tree Nuts", "Eggs"];
 
+const AGE_OPTIONS = [
+  "Under 18",
+  "18-24",
+  "25-34",
+  "35-44",
+  "45-54",
+  "55-64",
+  "65+",
+];
+
+const HEIGHT_OPTIONS_IMPERIAL = [
+  "Under 5'0\"",
+  "5'0\" - 5'3\"",
+  "5'4\" - 5'7\"",
+  "5'8\" - 5'11\"",
+  "6'0\" - 6'3\"",
+  "Over 6'3\"",
+];
+const HEIGHT_OPTIONS_METRIC = [
+  "Under 152 cm",
+  "152-160 cm",
+  "161-170 cm",
+  "171-180 cm",
+  "181-191 cm",
+  "Over 191 cm",
+];
+
+const WEIGHT_OPTIONS_IMPERIAL = [
+  "Under 110 lbs",
+  "110-130 lbs",
+  "131-155 lbs",
+  "156-180 lbs",
+  "181-210 lbs",
+  "Over 210 lbs",
+];
+const WEIGHT_OPTIONS_METRIC = [
+  "Under 50 kg",
+  "50-59 kg",
+  "60-70 kg",
+  "71-82 kg",
+  "83-95 kg",
+  "Over 95 kg",
+];
+
 // ── Formula generation ─────────────────────────────────────────────────────
 
 function generateFormula(answers: QuizAnswers) {
   const addons: string[] = [];
+  if (answers.goals.includes("weight_loss")) {
+    addons.push("Konjac Glucomannan (1g)", "Psyllium Husk (2g)");
+  }
   if (answers.goals.includes("focus")) addons.push("Lion's Mane Extract");
-  if (answers.goals.includes("sleep")) addons.push("Ashwagandha", "Melatonin 0.5mg");
-  if (answers.goals.includes("fitness")) addons.push("Creatine Monohydrate 3g");
-  if (answers.goals.includes("skincare")) addons.push("Collagen Peptides 5g", "Vitamin C");
-  if (answers.goals.includes("wellness")) addons.push("Vitamin D3 2000IU");
+  if (answers.goals.includes("sleep")) addons.push("Melatonin (1mg)");
+  if (answers.goals.includes("fitness")) addons.push("Creatine Monohydrate (3g)");
+  if (answers.goals.includes("skincare")) addons.push("Collagen Peptides (5g)", "Vitamin C (500mg)");
+  if (answers.goals.includes("wellness")) addons.push("Vitamin D3+K2");
 
   const protein = answers.proteinBase === "plant" ? "Pea + Rice Blend" : "Whey Isolate";
-  const calories = answers.proteinBase === "plant" ? 160 : 170;
-  const proteinG = answers.activityLevel === "very_active" || answers.activityLevel === "active" ? 30 : 25;
+  const calories = answers.proteinBase === "plant" ? 160 : 151;
+  const proteinG = answers.activityLevel === "very_active" || answers.activityLevel === "active" ? 30 : 26;
 
   return { protein, addons, calories, proteinG };
+}
+
+// ── Allergy check helpers ──────────────────────────────────────────────────
+
+function wheyDisabledReason(allergies: string[]): string | null {
+  if (allergies.includes("Dairy")) return "Contains dairy";
+  return null;
+}
+
+function plantDisabledReason(allergies: string[]): string | null {
+  if (allergies.includes("Soy")) return "May contain soy";
+  return null;
+}
+
+// ── Select component ───────────────────────────────────────────────────────
+
+function QuizSelect({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string | null;
+  options: string[];
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--color-ink)] mb-2 uppercase tracking-wide">
+        {label}
+      </label>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-[var(--color-surface)] border border-[var(--color-ink)]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-amber)] focus:ring-2 focus:ring-[var(--color-amber)]/20 transition-colors appearance-none cursor-pointer"
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6460' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center" }}
+      >
+        <option value="" disabled>{placeholder ?? `Select ${label.toLowerCase()}`}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -116,6 +225,44 @@ export default function QuizPage() {
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [answers, dispatch] = useReducer(quizReducer, initialAnswers);
   const [animating, setAnimating] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [heightUnit, setHeightUnit] = useState<"imperial" | "metric">("imperial");
+  const [weightUnit, setWeightUnit] = useState<"imperial" | "metric">("imperial");
+
+  // Show toast
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  // Allergy-aware dispatch
+  function dispatchWithAllergyCheck(action: QuizAction) {
+    if (action.type === "TOGGLE_ALLERGY") {
+      const wouldAdd = !answers.allergies.includes(action.allergy);
+
+      if (wouldAdd) {
+        if (action.allergy === "Dairy" && answers.proteinBase === "whey") {
+          const plantOk = !answers.allergies.includes("Soy");
+          if (plantOk) {
+            dispatch(action);
+            dispatch({ type: "SET_PROTEIN", base: "plant" });
+            showToast("We switched your protein base to Plant-Based due to your dairy allergy selection.");
+            return;
+          }
+        }
+        if (action.allergy === "Soy" && answers.proteinBase === "plant") {
+          const wheyOk = !answers.allergies.includes("Dairy");
+          if (wheyOk) {
+            dispatch(action);
+            dispatch({ type: "SET_PROTEIN", base: "whey" });
+            showToast("We switched your protein base to Whey Isolate due to your soy allergy selection.");
+            return;
+          }
+        }
+      }
+    }
+    dispatch(action);
+  }
 
   function goTo(next: number) {
     if (animating) return;
@@ -136,11 +283,25 @@ export default function QuizPage() {
   };
 
   const formula = generateFormula(answers);
+  const wheyReason = wheyDisabledReason(answers.allergies);
+  const plantReason = plantDisabledReason(answers.allergies);
+  const hasTreeNutsOrEggs =
+    answers.allergies.includes("Tree Nuts") || answers.allergies.includes("Eggs");
+  const hasGluten = answers.allergies.includes("Gluten");
+
+  const heightOptions = heightUnit === "imperial" ? HEIGHT_OPTIONS_IMPERIAL : HEIGHT_OPTIONS_METRIC;
+  const weightOptions = weightUnit === "imperial" ? WEIGHT_OPTIONS_IMPERIAL : WEIGHT_OPTIONS_METRIC;
 
   return (
     <div className="min-h-screen bg-[var(--color-cream)] pt-24 pb-16">
-      <div className="container-site max-w-2xl">
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[var(--color-ink)] text-[var(--color-cream)] text-sm px-5 py-3 rounded-xl shadow-lg max-w-sm text-center transition-all">
+          {toast}
+        </div>
+      )}
 
+      <div className="container-site max-w-2xl">
         {/* Step container */}
         <div
           style={{
@@ -167,7 +328,8 @@ export default function QuizPage() {
                     key={goal.id}
                     selected={answers.goals.includes(goal.id)}
                     onClick={() => dispatch({ type: "TOGGLE_GOAL", goal: goal.id })}
-                    icon={goal.icon}
+                    iconNode={typeof goal.icon !== "string" ? goal.icon : undefined}
+                    icon={typeof goal.icon === "string" ? goal.icon : undefined}
                     label={goal.label}
                     description={goal.desc}
                     multiSelect
@@ -186,20 +348,80 @@ export default function QuizPage() {
               subtitle="Pick the foundation of your formula. Both are complete amino acid profiles."
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <OptionTile
-                  selected={answers.proteinBase === "plant"}
-                  onClick={() => dispatch({ type: "SET_PROTEIN", base: "plant" })}
-                  icon="🌱"
-                  label="Plant-Based"
-                  description="Pea + rice blend. Vegan, dairy-free, complete amino profile."
-                />
-                <OptionTile
-                  selected={answers.proteinBase === "whey"}
-                  onClick={() => dispatch({ type: "SET_PROTEIN", base: "whey" })}
-                  icon="🥛"
-                  label="Whey Isolate"
-                  description="Fast-absorbing, minimal lactose. Ideal for post-workout recovery."
-                />
+                {/* Plant-Based */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => !plantReason && dispatch({ type: "SET_PROTEIN", base: "plant" })}
+                    disabled={!!plantReason}
+                    className={`w-full text-left rounded-2xl border-2 p-5 transition-all ${
+                      answers.proteinBase === "plant"
+                        ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30"
+                        : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="text-2xl mb-2">🌱</div>
+                    <p className="font-semibold mb-0.5">Plant-Based</p>
+                    <p className="text-xs text-[var(--color-ink-muted)]">
+                      Pea + rice blend. Vegan, dairy-free, complete amino profile.
+                    </p>
+                    {hasTreeNutsOrEggs && !plantReason && (
+                      <span className="mt-2 inline-block text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full">
+                        Allergen-free
+                      </span>
+                    )}
+                    {plantReason && (
+                      <span className="mt-2 inline-block text-xs text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full">
+                        {plantReason}
+                      </span>
+                    )}
+                    {answers.proteinBase === "plant" && (
+                      <span className="mt-2 block text-xs text-[var(--color-amber)] font-semibold">
+                        Selected
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Whey Isolate */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => !wheyReason && dispatch({ type: "SET_PROTEIN", base: "whey" })}
+                    disabled={!!wheyReason}
+                    className={`w-full text-left rounded-2xl border-2 p-5 transition-all ${
+                      answers.proteinBase === "whey"
+                        ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30"
+                        : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="text-2xl mb-2">🥛</div>
+                    <p className="font-semibold mb-0.5">Whey Isolate</p>
+                    <p className="text-xs text-[var(--color-ink-muted)]">
+                      Fast-absorbing, minimal lactose. Ideal for post-workout recovery.
+                    </p>
+                    {hasTreeNutsOrEggs && !wheyReason && (
+                      <span className="mt-2 inline-block text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full">
+                        Allergen-free
+                      </span>
+                    )}
+                    {wheyReason && (
+                      <span className="mt-2 inline-block text-xs text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full">
+                        {wheyReason}
+                      </span>
+                    )}
+                    {hasGluten && (
+                      <span className="mt-2 inline-block text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full ml-1">
+                        Check for gluten traces
+                      </span>
+                    )}
+                    {answers.proteinBase === "whey" && (
+                      <span className="mt-2 block text-xs text-[var(--color-amber)] font-semibold">
+                        Selected
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -212,7 +434,7 @@ export default function QuizPage() {
                     <button
                       key={allergy}
                       type="button"
-                      onClick={() => dispatch({ type: "TOGGLE_ALLERGY", allergy })}
+                      onClick={() => dispatchWithAllergyCheck({ type: "TOGGLE_ALLERGY", allergy })}
                       className={`px-4 py-2 rounded-full text-sm border transition-all ${
                         answers.allergies.includes(allergy)
                           ? "border-[var(--color-amber)] bg-[var(--color-amber-light)] text-[var(--color-ink)] font-medium"
@@ -233,7 +455,7 @@ export default function QuizPage() {
               stepNumber={3}
               totalSteps={TOTAL_STEPS}
               title="Pick your flavors"
-              subtitle={`Select up to 3. You'll get a blend of all chosen flavors in every bag. (${answers.flavors.length}/3 selected)`}
+              subtitle={`Select up to 3. You'll get a blend of all chosen flavors in every bottle. (${answers.flavors.length}/3 selected)`}
             >
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {FLAVORS.map((fl) => (
@@ -268,42 +490,105 @@ export default function QuizPage() {
               title="A few quick health factors"
               subtitle="Used only to calibrate your dosing. Never shared."
             >
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-[var(--color-ink)] mb-2 uppercase tracking-wide">
-                      Age
+              <div className="space-y-5">
+                {/* Age */}
+                <QuizSelect
+                  label="Age"
+                  value={answers.age}
+                  options={AGE_OPTIONS}
+                  onChange={(v) => dispatch({ type: "SET_AGE", age: v })}
+                  placeholder="Select age range"
+                />
+
+                {/* Height */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-semibold text-[var(--color-ink)] uppercase tracking-wide">
+                      Height
                     </label>
-                    <input
-                      type="number"
-                      min={16}
-                      max={80}
-                      placeholder="e.g. 26"
-                      defaultValue={answers.age ?? ""}
-                      onChange={(e) =>
-                        dispatch({ type: "SET_AGE", age: Number(e.target.value) })
-                      }
-                      className="w-full bg-[var(--color-surface)] border border-[var(--color-ink)]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-amber)] transition-colors"
-                    />
+                    <div className="flex rounded-full border border-[var(--color-ink)]/10 overflow-hidden text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setHeightUnit("imperial")}
+                        className={`px-3 py-1 transition-colors ${
+                          heightUnit === "imperial"
+                            ? "bg-[var(--color-ink)] text-[var(--color-cream)]"
+                            : "text-[var(--color-ink-muted)]"
+                        }`}
+                      >
+                        ft/in
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHeightUnit("metric")}
+                        className={`px-3 py-1 transition-colors ${
+                          heightUnit === "metric"
+                            ? "bg-[var(--color-ink)] text-[var(--color-cream)]"
+                            : "text-[var(--color-ink-muted)]"
+                        }`}
+                      >
+                        cm
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[var(--color-ink)] mb-2 uppercase tracking-wide">
-                      Weight (lbs)
-                    </label>
-                    <input
-                      type="number"
-                      min={80}
-                      max={400}
-                      placeholder="e.g. 155"
-                      defaultValue={answers.weight ?? ""}
-                      onChange={(e) =>
-                        dispatch({ type: "SET_WEIGHT", weight: Number(e.target.value) })
-                      }
-                      className="w-full bg-[var(--color-surface)] border border-[var(--color-ink)]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-amber)] transition-colors"
-                    />
-                  </div>
+                  <select
+                    value={answers.height ?? ""}
+                    onChange={(e) => dispatch({ type: "SET_HEIGHT", height: e.target.value })}
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-ink)]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-amber)] focus:ring-2 focus:ring-[var(--color-amber)]/20 transition-colors appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6460' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center" }}
+                  >
+                    <option value="" disabled>Select height range</option>
+                    {heightOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
                 </div>
 
+                {/* Weight */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-semibold text-[var(--color-ink)] uppercase tracking-wide">
+                      Weight
+                    </label>
+                    <div className="flex rounded-full border border-[var(--color-ink)]/10 overflow-hidden text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("imperial")}
+                        className={`px-3 py-1 transition-colors ${
+                          weightUnit === "imperial"
+                            ? "bg-[var(--color-ink)] text-[var(--color-cream)]"
+                            : "text-[var(--color-ink-muted)]"
+                        }`}
+                      >
+                        lbs
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("metric")}
+                        className={`px-3 py-1 transition-colors ${
+                          weightUnit === "metric"
+                            ? "bg-[var(--color-ink)] text-[var(--color-cream)]"
+                            : "text-[var(--color-ink-muted)]"
+                        }`}
+                      >
+                        kg
+                      </button>
+                    </div>
+                  </div>
+                  <select
+                    value={answers.weight ?? ""}
+                    onChange={(e) => dispatch({ type: "SET_WEIGHT", weight: e.target.value })}
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-ink)]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-amber)] focus:ring-2 focus:ring-[var(--color-amber)]/20 transition-colors appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6460' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center" }}
+                  >
+                    <option value="" disabled>Select weight range</option>
+                    {weightOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Activity Level */}
                 <div>
                   <p className="text-xs font-semibold text-[var(--color-ink)] mb-3 uppercase tracking-wide">
                     Activity Level
@@ -357,7 +642,7 @@ export default function QuizPage() {
                       <p className="text-sm font-semibold">{formula.protein}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-wide mb-0.5">Protein / serving</p>
+                      <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-wide mb-0.5">Protein per bottle</p>
                       <p className="text-sm font-semibold">{formula.proteinG}g</p>
                     </div>
                   </div>
@@ -366,7 +651,7 @@ export default function QuizPage() {
                     <div>
                       <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-wide mb-0.5">Flavors</p>
                       <p className="text-sm font-semibold capitalize">
-                        {answers.flavors.map((f) => FLAVORS.find((x) => x.id === f)?.label).join(" · ")}
+                        {answers.flavors.map((f) => FLAVORS.find((x) => x.id === f)?.label).join(", ")}
                       </p>
                     </div>
                   </div>
@@ -388,7 +673,7 @@ export default function QuizPage() {
                   )}
 
                   <div className="pt-2 flex justify-between items-center">
-                    <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-wide">Est. Calories / serving</p>
+                    <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-wide">Est. Calories per bottle</p>
                     <p className="font-display text-2xl font-bold text-[var(--color-amber)]">
                       {formula.calories} kcal
                     </p>

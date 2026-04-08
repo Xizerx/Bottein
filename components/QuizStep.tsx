@@ -58,6 +58,7 @@ interface OptionTileProps {
   selected: boolean;
   onClick: () => void;
   icon?: string;
+  iconNode?: React.ReactNode;
   label: string;
   description?: string;
   multiSelect?: boolean;
@@ -67,6 +68,7 @@ export function OptionTile({
   selected,
   onClick,
   icon,
+  iconNode,
   label,
   description,
   multiSelect,
@@ -82,7 +84,10 @@ export function OptionTile({
       }`}
     >
       <div className="flex items-start gap-3">
-        {icon && (
+        {iconNode && (
+          <span className="leading-none mt-0.5 shrink-0 text-[var(--color-ink)]">{iconNode}</span>
+        )}
+        {!iconNode && icon && (
           <span className="text-2xl leading-none mt-0.5 shrink-0">{icon}</span>
         )}
         <div className="flex-1 min-w-0">

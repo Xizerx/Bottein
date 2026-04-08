@@ -37,7 +37,7 @@ const values = [
   {
     icon: "🍓",
     title: "Real ingredients only.",
-    desc: "No artificial flavors, no artificial colors, no proprietary blends hiding mediocre doses. What's on the label is what's in the bag.",
+    desc: "No artificial flavors, no artificial colors, no proprietary blends hiding mediocre doses. What's on the label is what's in the bottle.",
   },
   {
     icon: "🤝",
@@ -99,7 +99,7 @@ export default function AboutPage() {
                 Something honest, effective, and genuinely enjoyable.&rdquo;
               </blockquote>
               <p className="text-sm text-[var(--color-ink-muted)]">
-                — The Bottein founding team
+                The Bottein founding team
               </p>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function AboutPage() {
           <div className="text-center mb-14">
             <p className="section-label mb-3">The Team</p>
             <h2 className="heading-display text-4xl md:text-5xl">
-              The people behind your formula.
+              The people behind your bottle.
             </h2>
           </div>
 
@@ -147,7 +147,7 @@ export default function AboutPage() {
           <div className="mb-14">
             <p className="section-label mb-3">Brand Values</p>
             <h2 className="heading-display text-4xl md:text-5xl max-w-xl">
-              What we stand for—and what we won&apos;t compromise on.
+              What we stand for, and what we won&apos;t compromise on.
             </h2>
           </div>
 

@@ -1,6 +1,12 @@
 // ─── Quiz ────────────────────────────────────────────────────────────────────
 
-export type Goal = "focus" | "sleep" | "fitness" | "skincare" | "wellness";
+export type Goal =
+  | "weight_loss"
+  | "focus"
+  | "sleep"
+  | "fitness"
+  | "skincare"
+  | "wellness";
 
 export type ProteinBase = "plant" | "whey";
 
@@ -15,9 +21,15 @@ export type FlavorOption =
 export type Addon =
   | "creatine"
   | "collagen"
-  | "ashwagandha"
-  | "melatonin"
-  | "vitaminD";
+  | "vitaminC"
+  | "vitaminDK2"
+  | "bComplex"
+  | "electrolyte"
+  | "omega3"
+  | "prebiotic"
+  | "konjac"
+  | "psyllium"
+  | "melatonin";
 
 export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
 
@@ -26,8 +38,9 @@ export interface QuizAnswers {
   proteinBase: ProteinBase | null;
   allergies: string[];
   flavors: FlavorOption[];
-  age: number | null;
-  weight: number | null;
+  age: string | null;
+  height: string | null;
+  weight: string | null;
   activityLevel: ActivityLevel | null;
 }
 
@@ -36,9 +49,15 @@ export interface QuizAnswers {
 export interface FormulaAddons {
   creatine: boolean;
   collagen: boolean;
-  ashwagandha: boolean;
+  vitaminC: boolean;
+  vitaminDK2: boolean;
+  bComplex: boolean;
+  electrolyte: boolean;
+  omega3: boolean;
+  prebiotic: boolean;
+  konjac: boolean;
+  psyllium: boolean;
   melatonin: boolean;
-  vitaminD: boolean;
 }
 
 export interface Formula {
@@ -64,9 +83,15 @@ export interface NutritionFacts {
   addons: {
     creatine?: number;    // g
     collagen?: number;    // g
-    ashwagandha?: number; // mg
+    vitaminC?: number;    // mg
+    vitaminDK2?: boolean;
+    bComplex?: boolean;
+    electrolyte?: boolean;
+    omega3?: number;      // mg
+    prebiotic?: number;   // g
+    konjac?: number;      // g
+    psyllium?: number;    // g
     melatonin?: number;   // mg
-    vitaminD?: number;    // IU
   };
 }
 

@@ -51,6 +51,147 @@ function Reveal({
   );
 }
 
+// ── Bottle illustration ───────────────────────────────────────────────────
+function BottleIllustration() {
+  return (
+    <div
+      className="relative flex items-center justify-center select-none"
+      style={{ perspective: "700px" }}
+    >
+      <div className="bottle-spin">
+        <svg
+          viewBox="0 0 100 165"
+          width="240"
+          height="396"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <clipPath id="bottleInterior">
+              <rect x="15" y="34" width="70" height="114" rx="2" />
+            </clipPath>
+            <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#aaa" />
+              <stop offset="100%" stopColor="#888" />
+            </linearGradient>
+            <linearGradient id="shoulderGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+            </linearGradient>
+          </defs>
+
+          {/* Cap */}
+          <rect x="32" y="8" width="36" height="15" rx="2" fill="url(#capGrad)" />
+          <rect x="30" y="21" width="40" height="8" rx="1.5" fill="#999" />
+
+          {/* Shoulder taper */}
+          <path
+            d="M30 29 L15 34 L85 34 L70 29 Z"
+            fill="rgba(200,137,58,0.12)"
+            stroke="var(--bottle-stroke)"
+            strokeWidth="1"
+          />
+
+          {/* Bottle body */}
+          <rect
+            x="15"
+            y="34"
+            width="70"
+            height="114"
+            rx="2"
+            fill="rgba(255,255,255,0.07)"
+            stroke="var(--bottle-stroke)"
+            strokeWidth="1.5"
+          />
+
+          {/* Liquid fill - animated */}
+          <g clipPath="url(#bottleInterior)">
+            <rect
+              className="liquid-fill"
+              x="15"
+              y="57"
+              width="70"
+              height="91"
+              fill="var(--bottle-liquid)"
+            />
+            {/* Liquid surface shimmer line */}
+            <rect x="15" y="57" width="70" height="2" rx="1" fill="var(--bottle-liquid)" opacity="0.6" />
+          </g>
+
+          {/* Shoulder highlight shimmer */}
+          <rect
+            className="bottle-shimmer"
+            x="20"
+            y="35"
+            width="7"
+            height="55"
+            rx="3.5"
+            fill="var(--bottle-shimmer)"
+          />
+
+          {/* Label area */}
+          <rect
+            x="21"
+            y="62"
+            width="58"
+            height="58"
+            rx="1.5"
+            fill="rgba(255,255,255,0.05)"
+            stroke="var(--bottle-stroke)"
+            strokeWidth="0.5"
+          />
+
+          {/* Label text */}
+          <text
+            x="50"
+            y="88"
+            textAnchor="middle"
+            fontFamily="Inter, system-ui, sans-serif"
+            fontSize="7.5"
+            fontWeight="700"
+            fill="var(--bottle-stroke)"
+            letterSpacing="2.5"
+          >
+            BOTTEIN
+          </text>
+          <text
+            x="50"
+            y="98"
+            textAnchor="middle"
+            fontFamily="Inter, system-ui, sans-serif"
+            fontSize="4"
+            fill="var(--bottle-stroke)"
+            letterSpacing="0.8"
+            opacity="0.75"
+          >
+            PROTEIN  16 FL OZ
+          </text>
+          <line x1="28" y1="103" x2="72" y2="103" stroke="var(--bottle-stroke)" strokeWidth="0.4" opacity="0.4" />
+          <text
+            x="50"
+            y="110"
+            textAnchor="middle"
+            fontFamily="Inter, system-ui, sans-serif"
+            fontSize="3.5"
+            fill="var(--bottle-stroke)"
+            letterSpacing="0.5"
+            opacity="0.55"
+          >
+            Snap. Add Water. Shake.
+          </text>
+
+          {/* Horizontal grip lines */}
+          <line x1="15" y1="128" x2="85" y2="128" stroke="var(--bottle-stroke)" strokeWidth="0.4" opacity="0.2" />
+          <line x1="15" y1="133" x2="85" y2="133" stroke="var(--bottle-stroke)" strokeWidth="0.4" opacity="0.2" />
+
+          {/* Bottom edge */}
+          <rect x="15" y="146" width="70" height="4" rx="2" fill="rgba(200,137,58,0.12)" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const steps = [
@@ -62,11 +203,11 @@ const steps = [
   {
     number: "02",
     title: "Get Your Formula",
-    desc: "Our AI—verified by nutrition experts—assembles a protein blend calibrated to your exact needs.",
+    desc: "Our AI, verified by nutrition experts, assembles a protein blend calibrated to your exact needs.",
   },
   {
     number: "03",
-    title: "Order & Adjust",
+    title: "Order and Enjoy",
     desc: "Mix and match flavors, choose add-ons, and refine your formula anytime. Your body, your rules.",
   },
 ];
@@ -76,7 +217,7 @@ const features = [
     icon: "🍓",
     label: "Real Fruit Powder",
     title: "Zero artificial anything.",
-    desc: "Every flavor is crafted from real freeze-dried fruit. What you taste is what's in the bag—nothing more.",
+    desc: "Every flavor is crafted from real freeze-dried fruit. What you taste is what's in the bottle. Nothing more.",
   },
   {
     icon: "🧠",
@@ -86,9 +227,9 @@ const features = [
   },
   {
     icon: "🎨",
-    label: "Mix & Match",
+    label: "Mix and Match",
     title: "Never get bored again.",
-    desc: "Pick up to 3 flavors per bag. Rotate them each month. Every order can be different—or exactly the same.",
+    desc: "Pick up to 3 flavors per bottle. Rotate them each month. Every order can be different, or exactly the same.",
   },
 ];
 
@@ -101,7 +242,7 @@ const testimonials = [
   },
   {
     quote:
-      "The quiz nailed it. I told it I was a light sleeper and focused on recovery—the formula had ashwagandha and collagen. Exactly what I'd have picked.",
+      "The quiz nailed it. I told it I was a light sleeper and focused on recovery, the formula had collagen and the right sleep support. Exactly what I'd have picked.",
     name: "James K.",
     role: "Software engineer, 29",
   },
@@ -125,7 +266,7 @@ export default function LandingPage() {
     <div>
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex items-center overflow-hidden bg-[var(--color-cream)]">
-        {/* Background texture / gradient */}
+        {/* Background gradient */}
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
@@ -136,83 +277,106 @@ export default function LandingPage() {
         />
 
         <div className="container-site w-full pt-28 pb-20 md:pt-36 md:pb-28">
-          <div className="max-w-4xl">
-            {/* Eyebrow */}
-            <div
-              className="section-label mb-6"
-              style={{
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? "none" : "translateY(16px)",
-                transition: "opacity 0.5s ease 100ms, transform 0.5s ease 100ms",
-              }}
-            >
-              Now accepting early access
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-            {/* Headline */}
-            <h1
-              className="heading-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-7 leading-[1.05]"
-              style={{
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? "none" : "translateY(24px)",
-                transition: "opacity 0.65s ease 200ms, transform 0.65s ease 200ms",
-              }}
-            >
-              Your protein.
-              <br />
-              <em className="not-italic text-[var(--color-amber)]">Personalized.</em>
-            </h1>
-
-            {/* Sub */}
-            <p
-              className="text-lg md:text-xl text-[var(--color-ink-muted)] max-w-xl leading-relaxed mb-10"
-              style={{
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? "none" : "translateY(20px)",
-                transition: "opacity 0.65s ease 320ms, transform 0.65s ease 320ms",
-              }}
-            >
-              Real fruit. Science-backed formulas. Flavors you actually want to drink.
-              Built for young professionals who don&apos;t want to compromise.
-            </p>
-
-            {/* CTAs */}
-            <div
-              className="flex flex-wrap gap-3"
-              style={{
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? "none" : "translateY(20px)",
-                transition: "opacity 0.65s ease 420ms, transform 0.65s ease 420ms",
-              }}
-            >
-              <Link href="/quiz" className="btn-primary text-sm">
-                Build Yours
-              </Link>
-              <a
-                href="#waitlist"
-                className="btn-outline text-sm"
+            {/* ── Left: text ── */}
+            <div>
+              {/* Eyebrow */}
+              <div
+                className="section-label mb-6"
+                style={{
+                  opacity: heroVisible ? 1 : 0,
+                  transform: heroVisible ? "none" : "translateY(16px)",
+                  transition: "opacity 0.5s ease 100ms, transform 0.5s ease 100ms",
+                }}
               >
-                Join Waitlist
-              </a>
+                Now accepting early access
+              </div>
+
+              {/* Headline */}
+              <h1
+                className="heading-display text-5xl sm:text-6xl md:text-7xl mb-6 leading-[1.05]"
+                style={{
+                  opacity: heroVisible ? 1 : 0,
+                  transform: heroVisible ? "none" : "translateY(24px)",
+                  transition: "opacity 0.65s ease 200ms, transform 0.65s ease 200ms",
+                }}
+              >
+                Your protein.
+                <br />
+                <em className="not-italic text-[var(--color-amber)]">Personalized.</em>
+              </h1>
+
+              {/* Subtitle */}
+              <p
+                className="text-xl md:text-2xl font-semibold text-[var(--color-ink)] mb-3 leading-snug"
+                style={{
+                  opacity: heroVisible ? 1 : 0,
+                  transform: heroVisible ? "none" : "translateY(20px)",
+                  transition: "opacity 0.65s ease 300ms, transform 0.65s ease 300ms",
+                }}
+              >
+                Pre-portioned. Just add water. Shake and go.
+              </p>
+              <p
+                className="text-base text-[var(--color-ink-muted)] max-w-md leading-relaxed mb-10"
+                style={{
+                  opacity: heroVisible ? 1 : 0,
+                  transform: heroVisible ? "none" : "translateY(20px)",
+                  transition: "opacity 0.65s ease 360ms, transform 0.65s ease 360ms",
+                }}
+              >
+                Science-backed formulas in a sealed 16 oz bottle. Built for young
+                professionals who don&apos;t want to compromise.
+              </p>
+
+              {/* CTAs */}
+              <div
+                className="flex flex-wrap gap-3"
+                style={{
+                  opacity: heroVisible ? 1 : 0,
+                  transform: heroVisible ? "none" : "translateY(20px)",
+                  transition: "opacity 0.65s ease 420ms, transform 0.65s ease 420ms",
+                }}
+              >
+                <Link href="/quiz" className="btn-primary text-sm">
+                  Build Yours
+                </Link>
+                <a href="#waitlist" className="btn-outline text-sm">
+                  Join Waitlist
+                </a>
+              </div>
+
+              {/* Social proof */}
+              <div
+                className="mt-12 flex flex-wrap items-center gap-6 text-sm text-[var(--color-ink-muted)]"
+                style={{
+                  opacity: heroVisible ? 1 : 0,
+                  transition: "opacity 0.65s ease 560ms",
+                }}
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[var(--color-amber)]">✦</span> Plant and whey options
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[var(--color-amber)]">✦</span> No artificial flavors
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[var(--color-amber)]">✦</span> Expert-verified
+                </span>
+              </div>
             </div>
 
-            {/* Social proof strip */}
+            {/* ── Right: bottle ── */}
             <div
-              className="mt-14 flex flex-wrap items-center gap-6 text-sm text-[var(--color-ink-muted)]"
+              className="flex items-center justify-center"
               style={{
                 opacity: heroVisible ? 1 : 0,
-                transition: "opacity 0.65s ease 560ms",
+                transform: heroVisible ? "none" : "translateY(30px)",
+                transition: "opacity 0.9s ease 500ms, transform 0.9s ease 500ms",
               }}
             >
-              <span className="flex items-center gap-1.5">
-                <span className="text-[var(--color-amber)]">✦</span> Plant &amp; whey options
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="text-[var(--color-amber)]">✦</span> No artificial flavors
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="text-[var(--color-amber)]">✦</span> Expert-verified
-              </span>
+              <BottleIllustration />
             </div>
           </div>
         </div>
@@ -235,18 +399,12 @@ export default function LandingPage() {
             <span key={`b${i}`} className="text-[var(--color-amber)]">✦</span>,
             <span key={`c${i}`} className="text-sm font-medium tracking-wide">AI-Verified Formulas</span>,
             <span key={`d${i}`} className="text-[var(--color-amber)]">✦</span>,
-            <span key={`e${i}`} className="text-sm font-medium tracking-wide">Mix &amp; Match Flavors</span>,
+            <span key={`e${i}`} className="text-sm font-medium tracking-wide">Snap. Add Water. Shake.</span>,
             <span key={`f${i}`} className="text-[var(--color-amber)]">✦</span>,
             <span key={`g${i}`} className="text-sm font-medium tracking-wide">Zero Artificial Anything</span>,
             <span key={`h${i}`} className="text-[var(--color-amber)]">✦</span>,
           ])}
         </div>
-        <style>{`
-          @keyframes ticker {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-          }
-        `}</style>
       </div>
 
       {/* ── How it works ──────────────────────────────────────────────── */}
@@ -327,7 +485,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-[var(--color-ink-muted)] leading-relaxed mb-8 max-w-sm">
                 Choose your base, pick up to three flavors, and layer in functional
-                add-ons like creatine, collagen, or ashwagandha. Watch your nutrition
+                add-ons like creatine, collagen, or omega-3. Watch your nutrition
                 panel update in real time.
               </p>
               <Link href="/builder" className="btn-primary">
@@ -338,13 +496,13 @@ export default function LandingPage() {
             {/* Mockup card */}
             <Reveal delay={120}>
               <div className="card-surface p-8 rounded-3xl shadow-xl">
-                <p className="section-label mb-5">Your formula preview</p>
+                <p className="section-label mb-5">Your bottle preview</p>
                 <div className="space-y-3 mb-6">
                   {[
                     { label: "Base Protein", value: "Whey Isolate" },
-                    { label: "Flavors", value: "Mango · Vanilla · Strawberry" },
-                    { label: "Add-ons", value: "Creatine · Vitamin D" },
-                    { label: "Serving size", value: "35g" },
+                    { label: "Flavors", value: "Mango, Vanilla, Strawberry" },
+                    { label: "Add-ons", value: "Creatine, Vitamin D3+K2" },
+                    { label: "Serving size", value: "16 oz (473 ml)" },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center py-2 border-b border-black/6 last:border-0">
                       <span className="text-xs text-[var(--color-ink-muted)] uppercase tracking-wide">{label}</span>
@@ -353,9 +511,9 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <div className="bg-[var(--color-amber-light)] rounded-xl p-4 text-center">
-                  <p className="text-xs text-[var(--color-ink-muted)] mb-0.5">Est. per serving</p>
+                  <p className="text-xs text-[var(--color-ink-muted)] mb-0.5">Est. per bottle</p>
                   <p className="font-display text-2xl font-bold text-[var(--color-ink)]">
-                    28g protein · 180 kcal
+                    28g protein, 151 kcal
                   </p>
                 </div>
               </div>
@@ -405,7 +563,7 @@ export default function LandingPage() {
             </h2>
             <p className="text-lg mb-10 text-[var(--color-ink)]/70 leading-relaxed">
               We&apos;re launching to a small group first. Drop your email and we&apos;ll
-              let you know when your formula is ready to build.
+              let you know when your bottle is ready to build.
             </p>
           </Reveal>
 
@@ -420,7 +578,7 @@ export default function LandingPage() {
                   const stored = JSON.parse(localStorage.getItem("bottein_waitlist") || "[]");
                   stored.push({ email, ts: new Date().toISOString() });
                   localStorage.setItem("bottein_waitlist", JSON.stringify(stored));
-                  alert("You&apos;re on the list! We&apos;ll be in touch soon.");
+                  alert("You're on the list! We'll be in touch soon.");
                   form.reset();
                 }
               }}

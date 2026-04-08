@@ -13,6 +13,11 @@
 
   --font-display: "Playfair Display", Georgia, serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Bottle illustration */
+  --bottle-liquid: rgba(200, 137, 58, 0.30);
+  --bottle-stroke: rgba(200, 137, 58, 0.45);
+  --bottle-shimmer: rgba(255, 255, 255, 0.45);
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
@@ -56,6 +61,42 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-amber-light);
   border-radius: 3px;
+}
+
+/* ── Bottle animations ────────────────────────────────────────────────────── */
+@keyframes bottleSpin {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+@keyframes liquidFill {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes bottleShimmer {
+  0%, 100% { opacity: 0.25; }
+  50%       { opacity: 0.65; }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.bottle-spin {
+  animation: bottleSpin 8s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.liquid-fill {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: liquidFill 2s ease-in-out forwards;
+}
+
+.bottle-shimmer {
+  animation: bottleShimmer 3s ease-in-out infinite;
 }
 
 /* ── Utility classes ──────────────────────────────────────────────────────── */
