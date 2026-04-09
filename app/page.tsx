@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+
+const Bottle3D = dynamic(() => import("@/components/Bottle3D"), {
+  ssr: false,
+  loading: () => <div style={{ width: 280, height: 420 }} />,
+});
 
 // ── Intersection-observer hook for reveal animations ──────────────────────
 function useInView(threshold = 0.15) {
@@ -454,7 +460,7 @@ export default function LandingPage() {
                 transition: "opacity 0.9s ease 500ms, transform 0.9s ease 500ms",
               }}
             >
-              <BottleIllustration />
+              <Bottle3D />
             </div>
           </div>
         </div>
