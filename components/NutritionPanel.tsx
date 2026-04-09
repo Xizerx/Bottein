@@ -332,17 +332,6 @@ export default function NutritionPanel({
           </div>
         )}
 
-        {/* Floating total pill above the nutrition bar */}
-        {orderSummary && !mobileOpen && (
-          <div className="px-3 pb-2 flex justify-end pointer-events-none">
-            <div className="pointer-events-auto bg-[var(--color-ink)] text-[var(--color-cream)] rounded-full shadow-lg border border-white/15 px-4 py-1.5 text-xs flex items-center gap-2">
-              <span className="text-white/60">Total</span>
-              <span className="font-bold tabular-nums">${orderSummary.total.toFixed(2)}</span>
-              <span className="text-white/40">incl. tax</span>
-            </div>
-          </div>
-        )}
-
         {/* Compact bar */}
         <button
           type="button"
@@ -358,6 +347,11 @@ export default function NutritionPanel({
               <span className="font-bold">{facts.protein}g</span>
               <span className="text-white/60 ml-1">protein</span>
             </span>
+            {orderSummary && orderSummary.itemCount > 0 && (
+              <span>
+                <span className="font-bold text-white">${orderSummary.total.toFixed(2)}</span>
+              </span>
+            )}
           </div>
           <svg
             width="16"
