@@ -77,7 +77,7 @@ export function OptionTile({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-amber)] group ${
+      className={`w-full h-full text-left rounded-2xl border-2 p-5 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-amber)] group ${
         selected
           ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30"
           : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"
@@ -122,7 +122,7 @@ export function OptionTile({
             </span>
           </div>
           {description && (
-            <p className="text-xs text-[var(--color-ink-muted)] mt-1 leading-relaxed">
+            <p className="text-xs text-[var(--color-ink-muted)] mt-1 leading-relaxed min-h-[2.5rem]">
               {description}
             </p>
           )}

@@ -140,7 +140,7 @@ export default function NutritionPanel({ facts, total }: NutritionPanelProps) {
   return (
     <>
       {/* ── Desktop sticky panel ── */}
-      <div className="hidden lg:block bg-[var(--color-ink)] text-[var(--color-cream)] rounded-2xl p-6 sticky top-6">
+      <div className="nutrition-panel hidden lg:block bg-[var(--color-ink)] text-[var(--color-cream)] rounded-2xl p-6 sticky top-6">
         {/* Header with subtotal */}
         <div className="border-b border-white/20 pb-4 mb-4">
           <div className="flex items-center justify-between mb-1">
@@ -161,7 +161,7 @@ export default function NutritionPanel({ facts, total }: NutritionPanelProps) {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40">
         {/* Expanded sheet */}
         {mobileOpen && (
-          <div className="bg-[var(--color-ink)] text-[var(--color-cream)] px-5 pt-5 pb-4 max-h-[70vh] overflow-y-auto">
+          <div className="nutrition-panel bg-[var(--color-ink)] text-[var(--color-cream)] px-5 pt-5 pb-4 max-h-[70vh] overflow-y-auto">
             <div className="border-b border-white/20 pb-4 mb-4">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-display text-xl font-bold">Nutrition Facts</h3>

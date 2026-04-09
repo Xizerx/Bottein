@@ -70,7 +70,8 @@ export default function Nav() {
           {/* Logo */}
           <Link
             href="/"
-            className="font-display text-2xl font-bold tracking-tight text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors"
+            className="text-2xl font-bold tracking-tight text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors"
+            style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
           >
             BOTTEIN
           </Link>

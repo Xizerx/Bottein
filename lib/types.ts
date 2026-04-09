@@ -10,7 +10,7 @@ export type Goal =
 
 export type ProteinBase = "plant" | "whey";
 
-export type Sweetener = "natural" | "light" | "none";
+export type Sweetener = "full_bodied" | "slim" | "lean";
 
 export type FlavorOption =
   | "mango"
@@ -60,6 +60,7 @@ export interface StoredQuizResult {
   weight: string | null;
   activityLevel: ActivityLevel | null;
   autoAddons: Addon[];
+  recommendedAddons: Addon[];
   timestamp: number;
 }
 

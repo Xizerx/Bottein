@@ -50,10 +50,11 @@ const SWEETENERS: {
   icon: string;
   label: string;
   desc: string;
+  badge: string;
 }[] = [
-  { id: "natural", icon: "🍯", label: "Natural Sweetness", desc: "Monk fruit and stevia blend" },
-  { id: "light",   icon: "🍬", label: "Lightly Sweet",     desc: "Subtle, balanced sweetness" },
-  { id: "none",    icon: "⬜", label: "No Added Sugar",    desc: "Pure, unflavoured base" },
+  { id: "full_bodied", icon: "🍯", label: "Full Bodied", desc: "Primarily cane sugar, small amount of monk fruit to round it out", badge: "+~4g sugar" },
+  { id: "slim",        icon: "🍬", label: "Slim",        desc: "Half cane sugar, half monk fruit and stevia blend",                badge: "+~2g sugar" },
+  { id: "lean",        icon: "🌿", label: "Lean",        desc: "Monk fruit and stevia only",                                      badge: "0g added sugar" },
 ];
 
 const ADDONS: {
@@ -86,13 +87,14 @@ const ADDONS: {
 
 function calcTasteScore(addons: Addon[], sweetener: Sweetener): number {
   let score = 100;
-  if (sweetener === "natural") score += 5;
-  if (sweetener === "none")    score -= 3;
-  if (addons.includes("konjac"))    score -= 15;
-  if (addons.includes("psyllium"))  score -= 10;
-  if (addons.includes("omega3"))    score -= 8;
-  if (addons.includes("bComplex"))  score -= 5;
-  if (addons.includes("creatine"))  score -= 3;
+  if (sweetener === "full_bodied") score += 8;
+  if (sweetener === "slim")        score += 4;
+  if (sweetener === "lean")        score += 1;
+  if (addons.includes("konjac"))   score -= 15;
+  if (addons.includes("psyllium")) score -= 10;
+  if (addons.includes("omega3"))   score -= 8;
+  if (addons.includes("bComplex")) score -= 5;
+  if (addons.includes("creatine")) score -= 3;
   return Math.min(Math.max(score, 0), 100);
 }
 
@@ -122,8 +124,8 @@ function calcNutrition(
   const flavorSugar    = flavors.length * 1.0;
   const flavorCalories = flavors.length * 2;
 
-  const sweetenerCalories = sweetener === "natural" ? 8 : sweetener === "light" ? 2 : 0;
-  const sweetenerSugar    = sweetener === "natural" ? 2 : sweetener === "light" ? 0.5 : 0;
+  const sweetenerCalories = sweetener === "full_bodied" ? 16 : sweetener === "slim" ? 8 : 0;
+  const sweetenerSugar    = sweetener === "full_bodied" ? 4  : sweetener === "slim" ? 2 : 0;
 
   const extraCals    = addons.reduce((s, id) => s + (ADDONS.find((a) => a.id === id)?.extraCalories ?? 0), 0);
   const extraProtein = addons.reduce((s, id) => s + (ADDONS.find((a) => a.id === id)?.extraProtein  ?? 0), 0);
@@ -166,17 +168,19 @@ function fmtPrice(delta: number) {
 
 export default function ProductBuilder() {
   const [base,      setBase]      = useState<ProteinBase>("whey");
-  const [sweetener, setSweetener] = useState<Sweetener>("light");
+  const [sweetener, setSweetener] = useState<Sweetener>("slim");
   const [flavors,   setFlavors]   = useState<FlavorOption[]>(["vanilla"]);
   const [addons,    setAddons]    = useState<Addon[]>([]);
   const [added,     setAdded]     = useState(false);
 
   // Quiz pre-population state
-  const [quizLoaded,      setQuizLoaded]      = useState(false);
-  const [quizBanner,      setQuizBanner]      = useState(false);
-  const [noQuizBanner,    setNoQuizBanner]    = useState(false);
-  const [quizAddons,      setQuizAddons]      = useState<Addon[]>([]);
-  const [allergies,       setAllergies]       = useState<string[]>([]);
+  const [quizLoaded,        setQuizLoaded]        = useState(false);
+  const [quizBanner,        setQuizBanner]        = useState(false);
+  const [noQuizBanner,      setNoQuizBanner]      = useState(false);
+  const [quizAddons,        setQuizAddons]        = useState<Addon[]>([]);
+  // Addons recommended from quiz (shown with badge but not pre-checked)
+  const [recommendedAddons, setRecommendedAddons] = useState<Addon[]>([]);
+  const [allergies,         setAllergies]         = useState<string[]>([]);
 
   useEffect(() => {
     const TTL = 24 * 60 * 60 * 1000;
@@ -191,6 +195,9 @@ export default function ProductBuilder() {
           if (parsed.autoAddons?.length > 0) {
             setAddons(parsed.autoAddons as Addon[]);
             setQuizAddons(parsed.autoAddons as Addon[]);
+          }
+          if (parsed.recommendedAddons?.length > 0) {
+            setRecommendedAddons(parsed.recommendedAddons as Addon[]);
           }
           if (parsed.allergies?.length > 0)     setAllergies(parsed.allergies as string[]);
           setQuizBanner(true);
@@ -208,10 +215,11 @@ export default function ProductBuilder() {
 
   const resetToDefaults = () => {
     setBase("whey");
-    setSweetener("light");
+    setSweetener("slim");
     setFlavors(["vanilla"]);
     setAddons([]);
     setQuizAddons([]);
+    setRecommendedAddons([]);
     setAllergies([]);
     setQuizBanner(false);
     setNoQuizBanner(false);
@@ -363,7 +371,7 @@ export default function ProductBuilder() {
           {/* Sweetener selector */}
           <section>
             <h2 className="heading-display text-2xl mb-1">Sweetener</h2>
-            <p className="text-sm text-[var(--color-ink-muted)] mb-4">All options are $0.00 — included in base.</p>
+            <p className="text-sm text-[var(--color-ink-muted)] mb-4">All options are included in base price. Pick what suits your taste.</p>
             <div className="grid grid-cols-3 gap-4">
               {SWEETENERS.map((sw) => (
                 <button
@@ -378,6 +386,9 @@ export default function ProductBuilder() {
                 >
                   <div className="text-2xl mb-2">{sw.icon}</div>
                   <p className="text-sm font-semibold mb-1 leading-tight">{sw.label}</p>
+                  <span className="inline-block text-[10px] font-semibold border border-[var(--color-ink)]/10 px-2 py-0.5 rounded-full mb-1.5 whitespace-nowrap">
+                    {sw.badge}
+                  </span>
                   <p className="text-xs text-[var(--color-ink-muted)]">{sw.desc}</p>
                   {sweetener === sw.id && (
                     <span className="mt-2 inline-block text-xs text-[var(--color-amber)] font-semibold">
@@ -433,8 +444,9 @@ export default function ProductBuilder() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {ADDONS.map((addon) => {
-                const selected   = addons.includes(addon.id);
-                const fromQuiz   = quizAddons.includes(addon.id);
+                const selected    = addons.includes(addon.id);
+                const fromQuiz    = quizAddons.includes(addon.id);
+                const recommended = recommendedAddons.includes(addon.id) && !fromQuiz;
                 return (
                   <button
                     key={addon.id}
@@ -454,6 +466,11 @@ export default function ProductBuilder() {
                           {fromQuiz && selected && (
                             <span className="inline-block text-[10px] font-semibold text-[var(--color-amber)] tracking-wide uppercase mt-0.5">
                               Added from quiz
+                            </span>
+                          )}
+                          {recommended && (
+                            <span className="inline-block text-[10px] font-semibold text-[var(--color-amber)] tracking-wide uppercase mt-0.5">
+                              Recommended for you
                             </span>
                           )}
                         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useState, useEffect } from "react";
+import { useReducer, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import QuizStep, { OptionTile } from "@/components/QuizStep";
 import type {
@@ -105,9 +105,24 @@ const SWEETENERS: {
   subtitle: string;
   badge: string;
 }[] = [
-  { id: "natural", label: "Natural Sweetness",  subtitle: "Real fruit sugars, a touch of honey",    badge: "+~2g sugar per serving" },
-  { id: "light",   label: "Lightly Sweet",       subtitle: "Monk fruit and a hint of coconut sugar", badge: "~0.5g sugar per serving" },
-  { id: "none",    label: "No Added Sugar",      subtitle: "Stevia and erythritol blend",            badge: "0g sugar" },
+  {
+    id: "full_bodied",
+    label: "Full Bodied",
+    subtitle: "Cane sugar forward — maximum flavour, the way it was meant to taste",
+    badge: "+~4g sugar per serving",
+  },
+  {
+    id: "slim",
+    label: "Slim",
+    subtitle: "Cane sugar and natural substitutes — great taste, fewer calories",
+    badge: "+~2g sugar per serving",
+  },
+  {
+    id: "lean",
+    label: "Lean",
+    subtitle: "Natural substitutes only — monk fruit and stevia, zero added sugar",
+    badge: "0g added sugar",
+  },
 ];
 
 const FLAVORS: { id: FlavorOption; icon: string; label: string }[] = [
@@ -137,20 +152,64 @@ const WEIGHT_OPTIONS_METRIC   = ["Under 50 kg", "50-59 kg", "60-70 kg", "71-82 k
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function smartSweetener(goals: Goal[]): Sweetener {
-  if (goals.includes("weight_loss") || goals.includes("sleep")) return "none";
-  if (goals.includes("fitness")     || goals.includes("wellness"))  return "natural";
-  return "light";
+// Internal goal → sweetener tag mapping:
+//   weight_loss  = WEIGHT_LOSS
+//   wellness     = GENERAL_WELLNESS
+//   skincare     = SKIN_BEAUTY
+//   fitness      = FITNESS_STRENGTH
+//   focus        = FOCUS_COGNITION
+//   sleep        = SLEEP_RECOVERY
+
+function getSweetenerRecommendation(goals: Goal[]): { sweetener: Sweetener; message: string } {
+  // Step 1 — Appetite Control conflicts with taste-first goals
+  if (goals.includes("weight_loss") && (goals.includes("wellness") || goals.includes("skincare"))) {
+    return {
+      sweetener: "slim",
+      message: "Based on your mix of goals, we recommend Slim — a balanced middle ground between great taste and calorie control.",
+    };
+  }
+  // Step 2 — Appetite Control alone or dominant
+  if (goals.includes("weight_loss") && !goals.includes("wellness") && !goals.includes("skincare")) {
+    return {
+      sweetener: "lean",
+      message: "Based on your goals, we recommend Lean — natural substitutes keep calories down without sacrificing drinkability.",
+    };
+  }
+  // Step 3 — Taste-first goals (no appetite control)
+  if ((goals.includes("wellness") || goals.includes("skincare")) && !goals.includes("weight_loss")) {
+    return {
+      sweetener: "full_bodied",
+      message: "Based on your goals, we recommend Full Bodied — made to taste as good as it is good for you.",
+    };
+  }
+  // Step 4 — Performance / cognitive / sleep goals only
+  if (goals.includes("fitness") || goals.includes("focus") || goals.includes("sleep")) {
+    return {
+      sweetener: "slim",
+      message: "Based on your goals, we recommend Slim — the right balance for performance without the sugar load.",
+    };
+  }
+  // Step 5 — Fallback
+  return {
+    sweetener: "slim",
+    message: "Based on your goals, we recommend Slim — a great all-rounder.",
+  };
 }
 
 function generateAutoAddons(goals: Goal[]): Addon[] {
+  // Auto-checked in builder: weight-loss and sleep goals only.
+  // Skincare → collagen is handled as a "Recommended for you" badge (not force-checked).
   const addons: Addon[] = [];
   if (goals.includes("weight_loss")) addons.push("konjac", "psyllium");
   if (goals.includes("sleep"))       addons.push("melatonin");
-  if (goals.includes("fitness"))     addons.push("creatine");
-  if (goals.includes("skincare"))    addons.push("collagen", "vitaminC");
-  if (goals.includes("wellness"))    addons.push("vitaminDK2");
   return addons;
+}
+
+function generateRecommendedAddons(goals: Goal[]): Addon[] {
+  // Shown with "Recommended for you" badge in builder, but not pre-checked.
+  const recs: Addon[] = [];
+  if (goals.includes("skincare")) recs.push("collagen");
+  return recs;
 }
 
 function generateFormula(answers: QuizAnswers) {
@@ -214,14 +273,41 @@ export default function QuizPage() {
   const [toast, setToast]   = useState<string | null>(null);
   const [heightUnit, setHeightUnit] = useState<"imperial" | "metric">("imperial");
   const [weightUnit, setWeightUnit] = useState<"imperial" | "metric">("imperial");
-  const [sweetenerRec, setSweetenerRec] = useState<Sweetener | null>(null);
+  const [recMessage, setRecMessage] = useState<string | null>(null);
+  const [sweetenerManuallyOverridden, setSweetenerManuallyOverridden] = useState(false);
+  // Tracks the goals state that was last used to compute the sweetener recommendation.
+  // Uses a ref so changes don't trigger re-renders.
+  const goalsHashRef = useRef<string>("");
 
-  // Smart sweetener default when entering step 3
+  // ── recomputeFromGoals ──────────────────────────────────────────────────
+  // Single source of truth for all goal-derived state. Call this whenever
+  // goals change (on Continue from step 1, or when a later step detects
+  // stale goals via goalsHashRef). All subsequent steps read exclusively
+  // from the state updated here — no per-step independent copies.
+  //
+  // Reactive pattern:
+  //   1. getSweetenerRecommendation → always called fresh, never cached.
+  //   2. sweetenerManuallyOverridden is always reset when goals change
+  //      (goal changes are material; user intent no longer applies).
+  //   3. autoAddons / recommendedAddons are derived from scratch each call.
+  //   4. Protein allergy-lock is re-validated (handled in dispatchWithAllergyCheck).
+  //   5. localStorage is written on step 6 after all answers are collected.
+  function recomputeFromGoals(goals: Goal[]) {
+    const { sweetener, message } = getSweetenerRecommendation(goals);
+    setSweetenerManuallyOverridden(false);
+    setRecMessage(message);
+    dispatch({ type: "SET_SWEETENER", sweetener });
+    goalsHashRef.current = JSON.stringify(goals);
+  }
+
+  // Detect goals changes when navigating between steps (e.g. back to step 1,
+  // change goals, continue forward). Only recomputes when the hash has changed.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (step === 3 && answers.sweetener === null) {
-      const rec = smartSweetener(answers.goals);
-      setSweetenerRec(rec);
-      dispatch({ type: "SET_SWEETENER", sweetener: rec });
+    if (step <= 1) return;
+    const hash = JSON.stringify(answers.goals);
+    if (hash !== goalsHashRef.current) {
+      recomputeFromGoals(answers.goals);
     }
   }, [step]);
 
@@ -238,8 +324,9 @@ export default function QuizPage() {
       height:        answers.height,
       weight:        answers.weight,
       activityLevel: answers.activityLevel,
-      autoAddons:    generateAutoAddons(answers.goals),
-      timestamp:     Date.now(),
+      autoAddons:        generateAutoAddons(answers.goals),
+      recommendedAddons: generateRecommendedAddons(answers.goals),
+      timestamp:         Date.now(),
     };
     try { localStorage.setItem("bottein_quiz_result", JSON.stringify(result)); } catch {}
   }, [step]);
@@ -250,23 +337,10 @@ export default function QuizPage() {
   }
 
   function dispatchWithAllergyCheck(action: QuizAction) {
-    if (action.type === "TOGGLE_ALLERGY") {
-      const wouldAdd = !answers.allergies.includes(action.allergy);
-      if (wouldAdd) {
-        if (action.allergy === "Dairy" && answers.proteinBase === "whey" && !answers.allergies.includes("Soy")) {
-          dispatch(action);
-          dispatch({ type: "SET_PROTEIN", base: "plant" });
-          showToast("We switched your protein base to Plant-Based due to your dairy allergy selection.");
-          return;
-        }
-        if (action.allergy === "Soy" && answers.proteinBase === "plant" && !answers.allergies.includes("Dairy")) {
-          dispatch(action);
-          dispatch({ type: "SET_PROTEIN", base: "whey" });
-          showToast("We switched your protein base to Whey Isolate due to your soy allergy selection.");
-          return;
-        }
-      }
-    }
+    // Allergies and protein are now shown together on the same step so the user
+    // can see and resolve any conflict themselves. We no longer auto-switch the
+    // protein — the inline error in the UI explains the conflict, and canProceed
+    // blocks advancement until it is resolved.
     dispatch(action);
   }
 
@@ -279,12 +353,25 @@ export default function QuizPage() {
 
   const canProceed = (): boolean => {
     if (step === 1) return answers.goals.length > 0;
-    if (step === 2) return answers.proteinBase !== null;
-    if (step === 3) return answers.sweetener !== null;
-    if (step === 4) return answers.flavors.length > 0;
-    if (step === 5) return answers.activityLevel !== null;
+    if (step === 2) return answers.activityLevel !== null;   // health factors
+    if (step === 3) {                                        // protein + allergies
+      if (answers.proteinBase === null) return false;
+      if (answers.proteinBase === "whey"  && answers.allergies.includes("Dairy")) return false;
+      if (answers.proteinBase === "plant" && answers.allergies.includes("Soy"))   return false;
+      return true;
+    }
+    if (step === 4) return answers.sweetener !== null;       // sweetener
+    if (step === 5) return answers.flavors.length > 0;       // flavors
     return true;
   };
+
+  // Inline conflict message shown inside the protein step.
+  const allergyConflictMsg: string | null =
+    answers.proteinBase === "whey"  && answers.allergies.includes("Dairy")
+      ? "Whey Isolate contains dairy. Switch to Plant-Based or remove the Dairy restriction to continue."
+      : answers.proteinBase === "plant" && answers.allergies.includes("Soy")
+      ? "Plant-Based may contain soy. Switch to Whey Isolate or remove the Soy restriction to continue."
+      : null;
 
   const formula       = generateFormula(answers);
   const wheyReason    = wheyDisabledReason(answers.allergies);
@@ -317,7 +404,7 @@ export default function QuizPage() {
           {/* ── Step 1: Goals ── */}
           {step === 1 && (
             <QuizStep stepNumber={1} totalSteps={TOTAL_STEPS} title="What are you optimizing for?" subtitle="Select all that apply. We'll tailor your formula to match.">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {GOALS.map((goal) => (
                   <OptionTile
                     key={goal.id}
@@ -334,121 +421,9 @@ export default function QuizPage() {
             </QuizStep>
           )}
 
-          {/* ── Step 2: Protein + Allergies ── */}
+          {/* ── Step 2: Health factors (moved from step 5) ── */}
           {step === 2 && (
-            <QuizStep stepNumber={2} totalSteps={TOTAL_STEPS} title="Choose your protein base" subtitle="Pick the foundation of your formula. Both are complete amino acid profiles.">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {/* Plant-Based */}
-                <button
-                  type="button"
-                  onClick={() => !plantReason && dispatch({ type: "SET_PROTEIN", base: "plant" })}
-                  disabled={!!plantReason}
-                  className={`text-left rounded-2xl border-2 p-5 transition-all ${answers.proteinBase === "plant" ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <div className="text-2xl mb-2">🌱</div>
-                  <p className="font-semibold mb-0.5">Plant-Based</p>
-                  <p className="text-xs text-[var(--color-ink-muted)]">Pea + rice blend. Vegan, dairy-free, complete amino profile.</p>
-                  {hasTreeNutsOrEggs && !plantReason && <span className="mt-2 inline-block text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full">Allergen-free</span>}
-                  {plantReason && <span className="mt-2 inline-block text-xs text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full">{plantReason}</span>}
-                  {answers.proteinBase === "plant" && <span className="mt-2 block text-xs text-[var(--color-amber)] font-semibold">Selected</span>}
-                </button>
-
-                {/* Whey Isolate */}
-                <button
-                  type="button"
-                  onClick={() => !wheyReason && dispatch({ type: "SET_PROTEIN", base: "whey" })}
-                  disabled={!!wheyReason}
-                  className={`text-left rounded-2xl border-2 p-5 transition-all ${answers.proteinBase === "whey" ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <div className="text-2xl mb-2">🥛</div>
-                  <p className="font-semibold mb-0.5">Whey Isolate</p>
-                  <p className="text-xs text-[var(--color-ink-muted)]">Fast-absorbing, minimal lactose. Ideal for post-workout recovery.</p>
-                  {hasTreeNutsOrEggs && !wheyReason && <span className="mt-2 inline-block text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full">Allergen-free</span>}
-                  {wheyReason && <span className="mt-2 inline-block text-xs text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full">{wheyReason}</span>}
-                  {hasGluten && <span className="mt-2 inline-block text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full ml-1">Check for gluten traces</span>}
-                  {answers.proteinBase === "whey" && <span className="mt-2 block text-xs text-[var(--color-amber)] font-semibold">Selected</span>}
-                </button>
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-[var(--color-ink)] mb-3">
-                  Any allergies or restrictions?
-                  <span className="text-[var(--color-ink-muted)] font-normal ml-1">(optional)</span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {ALLERGIES.map((allergy) => (
-                    <button key={allergy} type="button"
-                      onClick={() => dispatchWithAllergyCheck({ type: "TOGGLE_ALLERGY", allergy })}
-                      className={`px-4 py-2 rounded-full text-sm border transition-all ${answers.allergies.includes(allergy) ? "border-[var(--color-amber)] bg-[var(--color-amber-light)] text-[var(--color-ink)] font-medium" : "border-[var(--color-ink)]/15 text-[var(--color-ink-muted)] hover:border-[var(--color-amber-light)]"}`}
-                    >{allergy}</button>
-                  ))}
-                </div>
-              </div>
-            </QuizStep>
-          )}
-
-          {/* ── Step 3: Sweetener ── */}
-          {step === 3 && (
-            <QuizStep stepNumber={3} totalSteps={TOTAL_STEPS} title="How would you like it sweetened?" subtitle="We use only natural options. Pick what suits your goals.">
-              {sweetenerRec && (
-                <p className="text-xs text-[var(--color-amber)] font-medium mb-4 bg-[var(--color-amber-light)]/40 px-3 py-2 rounded-xl">
-                  Based on your goals, we recommend{" "}
-                  <strong>{SWEETENERS.find((s) => s.id === sweetenerRec)?.label}</strong>.
-                </p>
-              )}
-              <div className="grid grid-cols-1 gap-3">
-                {SWEETENERS.map((sw) => (
-                  <button
-                    key={sw.id}
-                    type="button"
-                    onClick={() => {
-                      setSweetenerRec(null); // user overriding
-                      dispatch({ type: "SET_SWEETENER", sweetener: sw.id });
-                    }}
-                    className={`text-left rounded-2xl border-2 p-5 transition-all ${answers.sweetener === sw.id ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"}`}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-sm mb-0.5">{sw.label}</p>
-                        <p className="text-xs text-[var(--color-ink-muted)]">{sw.subtitle}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        <span className="text-xs font-semibold bg-[var(--color-surface)] border border-[var(--color-ink)]/10 px-2.5 py-1 rounded-full whitespace-nowrap">
-                          {sw.badge}
-                        </span>
-                        {answers.sweetener === sw.id && (
-                          <span className="text-xs text-[var(--color-amber)] font-semibold">Selected</span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </QuizStep>
-          )}
-
-          {/* ── Step 4: Flavors (was 3) ── */}
-          {step === 4 && (
-            <QuizStep stepNumber={4} totalSteps={TOTAL_STEPS} title="Pick your flavors" subtitle={`Select up to 3. You'll get a blend of all chosen flavors in every bottle. (${answers.flavors.length}/3 selected)`}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {FLAVORS.map((fl) => (
-                  <button key={fl.id} type="button"
-                    onClick={() => dispatch({ type: "TOGGLE_FLAVOR", flavor: fl.id })}
-                    disabled={!answers.flavors.includes(fl.id) && answers.flavors.length >= 3}
-                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-2 border-2 transition-all text-center p-4 ${answers.flavors.includes(fl.id) ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"} disabled:opacity-30 disabled:cursor-not-allowed`}
-                  >
-                    <span className="text-3xl">{fl.icon}</span>
-                    <span className="text-xs font-semibold">{fl.label}</span>
-                    {answers.flavors.includes(fl.id) && <span className="text-[var(--color-amber)] text-xs">✓</span>}
-                  </button>
-                ))}
-              </div>
-            </QuizStep>
-          )}
-
-          {/* ── Step 5: Health factors (was 4) ── */}
-          {step === 5 && (
-            <QuizStep stepNumber={5} totalSteps={TOTAL_STEPS} title="A few quick health factors" subtitle="Used only to calibrate your dosing. Never shared.">
+            <QuizStep stepNumber={2} totalSteps={TOTAL_STEPS} title="A few quick health factors" subtitle="Used only to calibrate your dosing. Never shared.">
               <div className="space-y-5">
                 <QuizSelect label="Age" value={answers.age} options={AGE_OPTIONS} onChange={(v) => dispatch({ type: "SET_AGE", age: v })} placeholder="Select age range" />
 
@@ -497,6 +472,131 @@ export default function QuizPage() {
                   </div>
                 </div>
               </div>
+            </QuizStep>
+          )}
+
+          {/* ── Step 4: Sweetener ── */}
+          {step === 4 && (
+            <QuizStep stepNumber={4} totalSteps={TOTAL_STEPS} title="How would you like it sweetened?" subtitle="We always use natural sweeteners. Pick your preferred balance.">
+              {recMessage && !sweetenerManuallyOverridden && (
+                <p className="text-xs text-[var(--color-amber)] font-medium mb-4 bg-[var(--color-amber-light)]/40 px-3 py-2 rounded-xl">
+                  {recMessage}
+                </p>
+              )}
+              <div className="grid grid-cols-1 gap-3">
+                {SWEETENERS.map((sw) => (
+                  <button
+                    key={sw.id}
+                    type="button"
+                    onClick={() => {
+                      setSweetenerManuallyOverridden(true);
+                      setRecMessage(null);
+                      dispatch({ type: "SET_SWEETENER", sweetener: sw.id });
+                    }}
+                    className={`text-left rounded-2xl border-2 p-5 transition-all ${answers.sweetener === sw.id ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"}`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-semibold text-sm mb-0.5">{sw.label}</p>
+                        <p className="text-xs text-[var(--color-ink-muted)]">{sw.subtitle}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className="text-xs font-semibold bg-[var(--color-surface)] border border-[var(--color-ink)]/10 px-2.5 py-1 rounded-full whitespace-nowrap">
+                          {sw.badge}
+                        </span>
+                        {answers.sweetener === sw.id && (
+                          <span className="text-xs text-[var(--color-amber)] font-semibold">Selected</span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </QuizStep>
+          )}
+
+          {/* ── Step 5: Flavors ── */}
+          {step === 5 && (
+            <QuizStep stepNumber={5} totalSteps={TOTAL_STEPS} title="Pick your flavors" subtitle={`Select up to 3. You'll get a blend of all chosen flavors in every bottle. (${answers.flavors.length}/3 selected)`}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {FLAVORS.map((fl) => (
+                  <button key={fl.id} type="button"
+                    onClick={() => dispatch({ type: "TOGGLE_FLAVOR", flavor: fl.id })}
+                    disabled={!answers.flavors.includes(fl.id) && answers.flavors.length >= 3}
+                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-2 border-2 transition-all text-center p-4 ${answers.flavors.includes(fl.id) ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"} disabled:opacity-30 disabled:cursor-not-allowed`}
+                  >
+                    <span className="text-3xl">{fl.icon}</span>
+                    <span className="text-xs font-semibold">{fl.label}</span>
+                    {answers.flavors.includes(fl.id) && <span className="text-[var(--color-amber)] text-xs">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </QuizStep>
+          )}
+
+          {/* ── Step 3: Protein + Allergies ── */}
+          {step === 3 && (
+            <QuizStep stepNumber={3} totalSteps={TOTAL_STEPS} title="Choose your protein base" subtitle="Pick the foundation of your formula. Both are complete amino acid profiles.">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+
+                {/* Whey Isolate — left */}
+                <button
+                  type="button"
+                  onClick={() => !wheyReason && dispatch({ type: "SET_PROTEIN", base: "whey" })}
+                  disabled={!!wheyReason}
+                  className={`text-left rounded-2xl border-2 p-5 transition-all ${answers.proteinBase === "whey" ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <div className="text-2xl mb-2">🥛</div>
+                  <p className="font-semibold mb-0.5">Whey Isolate</p>
+                  <p className="text-xs text-[var(--color-ink-muted)]">Fast-absorbing, minimal lactose. Ideal for post-workout recovery.</p>
+                  {hasTreeNutsOrEggs && !wheyReason && <span className="mt-2 inline-block text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full">Allergen-free</span>}
+                  {wheyReason && <span className="mt-2 inline-block text-xs text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full">{wheyReason}</span>}
+                  {hasGluten && <span className="mt-2 inline-block text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full ml-1">Check for gluten traces</span>}
+                  {answers.proteinBase === "whey" && <span className="mt-2 block text-xs text-[var(--color-amber)] font-semibold">Selected</span>}
+                </button>
+
+                {/* Plant-Based — right */}
+                <button
+                  type="button"
+                  onClick={() => !plantReason && dispatch({ type: "SET_PROTEIN", base: "plant" })}
+                  disabled={!!plantReason}
+                  className={`text-left rounded-2xl border-2 p-5 transition-all ${answers.proteinBase === "plant" ? "border-[var(--color-amber)] bg-[var(--color-amber-light)]/30" : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-amber-light)]"} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <div className="text-2xl mb-2">🌱</div>
+                  <p className="font-semibold mb-0.5">Plant-Based</p>
+                  <p className="text-xs text-[var(--color-ink-muted)]">Pea + rice blend. Vegan, dairy-free, complete amino profile.</p>
+                  {hasTreeNutsOrEggs && !plantReason && <span className="mt-2 inline-block text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full">Allergen-free</span>}
+                  {plantReason && <span className="mt-2 inline-block text-xs text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full">{plantReason}</span>}
+                  {answers.proteinBase === "plant" && <span className="mt-2 block text-xs text-[var(--color-amber)] font-semibold">Selected</span>}
+                </button>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-ink)] mb-3">
+                  Any allergies or restrictions?
+                  <span className="text-[var(--color-ink-muted)] font-normal ml-1">(optional)</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {ALLERGIES.map((allergy) => (
+                    <button key={allergy} type="button"
+                      onClick={() => dispatchWithAllergyCheck({ type: "TOGGLE_ALLERGY", allergy })}
+                      className={`px-4 py-2 rounded-full text-sm border transition-all ${answers.allergies.includes(allergy) ? "border-[var(--color-amber)] bg-[var(--color-amber-light)] text-[var(--color-ink)] font-medium" : "border-[var(--color-ink)]/15 text-[var(--color-ink-muted)] hover:border-[var(--color-amber-light)]"}`}
+                    >{allergy}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Allergy / protein conflict — blocks Continue until resolved */}
+              {allergyConflictMsg && (
+                <div className="mt-5 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3.5">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5 text-red-500">
+                    <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                    <path d="M8 6v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
+                  </svg>
+                  <p className="text-sm text-red-700 leading-snug">{allergyConflictMsg}</p>
+                </div>
+              )}
             </QuizStep>
           )}
 
@@ -563,8 +663,8 @@ export default function QuizPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/builder?from=quiz" className="btn-primary flex-1 text-center">Customize in Builder</Link>
                 <button onClick={() => setStep(1)} className="btn-outline flex-1 text-center">Retake Quiz</button>
+                <Link href="/builder?from=quiz" className="btn-primary flex-1 text-center">Customize in Builder</Link>
               </div>
             </div>
           )}
@@ -580,7 +680,12 @@ export default function QuizPage() {
               </svg>
               Back
             </button>
-            <button onClick={() => goTo(step + 1)} disabled={!canProceed()}
+            <button
+              onClick={() => {
+                if (step === 1) recomputeFromGoals(answers.goals);
+                goTo(step + 1);
+              }}
+              disabled={!canProceed()}
               className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 text-sm">
               {step === 5 ? "See My Formula" : "Continue"}
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
