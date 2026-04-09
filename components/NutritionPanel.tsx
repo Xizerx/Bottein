@@ -13,9 +13,29 @@ const DV = {
   fiber:    28,
 };
 
+export interface OrderSummaryLine {
+  id: string;
+  label: string;
+  price: number;
+  quantity: number;
+  details?: { label: string; value: string }[];
+}
+
+export interface OrderSummaryData {
+  lines: OrderSummaryLine[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  meetsMinimum: boolean;
+  minQty: number;
+  itemCount: number;
+}
+
 interface NutritionPanelProps {
   facts: NutritionFacts;
-  total?: number; // CAD price subtotal
+  orderSummary?: OrderSummaryData;
+  onUpdateQuantity?: (id: string, quantity: number) => void;
+  onCheckout?: () => void;
 }
 
 // ── Bar component ─────────────────────────────────────────────────────────
@@ -134,46 +154,181 @@ function AddonRow({ label, value }: { label: string; value: string }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
-export default function NutritionPanel({ facts, total }: NutritionPanelProps) {
+function OrderSummaryCard({
+  data,
+  onUpdateQuantity,
+  onCheckout,
+}: {
+  data: OrderSummaryData;
+  onUpdateQuantity?: (id: string, quantity: number) => void;
+  onCheckout?: () => void;
+}) {
+  return (
+    <div className="bg-white text-[var(--color-ink)] border border-[var(--color-ink)] rounded-2xl p-6">
+      <div className="border-b border-[var(--color-ink)]/20 pb-3 mb-3">
+        <h3 className="font-display text-xl font-bold">Order Summary</h3>
+        <p className="text-xs text-[var(--color-ink)]/60">Estimated in CAD</p>
+      </div>
+      <div className="space-y-2 text-sm">
+        {data.lines.length === 0 ? (
+          <p className="text-[var(--color-ink)]/50 italic text-xs py-1">
+            Your cart is empty. Add a bottle to get started.
+          </p>
+        ) : (
+          data.lines.map((line) => {
+            const hasDetails = line.details && line.details.length > 0;
+            return (
+              <details
+                key={line.id}
+                open={false}
+                className="group text-[var(--color-ink)]/80"
+              >
+                <summary
+                  className={`flex items-center gap-2 list-none ${
+                    hasDetails ? "cursor-pointer hover:text-[var(--color-ink)]" : ""
+                  }`}
+                >
+                  {hasDetails && (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      className="transition-transform group-open:rotate-90 shrink-0"
+                    >
+                      <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  <span className="flex-1 min-w-0 truncate">{line.label}</span>
+                  {onUpdateQuantity && (
+                    <div className="inline-flex items-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onUpdateQuantity(line.id, Math.max(0, line.quantity - 1));
+                        }}
+                        className="w-6 h-6 flex items-center justify-center rounded-full text-[var(--color-ink)]/60 hover:text-[var(--color-ink)] hover:bg-black/5 transition-colors"
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onUpdateQuantity(line.id, line.quantity + 1);
+                        }}
+                        className="w-6 h-6 flex items-center justify-center rounded-full text-[var(--color-ink)]/60 hover:text-[var(--color-ink)] hover:bg-black/5 transition-colors"
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+                  <span className="tabular-nums shrink-0 w-16 text-right">
+                    ${line.price.toFixed(2)}
+                  </span>
+                </summary>
+                {hasDetails && (
+                  <ul className="mt-1.5 ml-4 space-y-0.5 text-xs text-[var(--color-ink)]/60">
+                    {line.details!.map((d, j) => (
+                      <li key={j} className="flex justify-between gap-2">
+                        <span className="shrink-0">{d.label}</span>
+                        <span className="text-right">{d.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </details>
+            );
+          })
+        )}
+      </div>
+      <div className="border-t border-[var(--color-ink)]/10 mt-3 pt-3 space-y-1.5 text-sm">
+        <div className="flex justify-between text-[var(--color-ink)]/70">
+          <span>Subtotal</span>
+          <span className="tabular-nums">${data.subtotal.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-[var(--color-ink)]/70">
+          <span>Tax (13%)</span>
+          <span className="tabular-nums">${data.tax.toFixed(2)}</span>
+        </div>
+      </div>
+      <div className="border-t border-[var(--color-ink)]/20 mt-3 pt-3 flex justify-between items-baseline">
+        <span className="font-semibold">Total</span>
+        <span className="font-display text-2xl font-bold tabular-nums">
+          ${data.total.toFixed(2)}
+        </span>
+      </div>
+      {onCheckout && (
+        <div className="mt-4 space-y-2">
+          {!data.meetsMinimum && data.itemCount > 0 && (
+            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+              Minimum order is {data.minQty}. Add {data.minQty - data.itemCount} more to check out.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={onCheckout}
+            disabled={!data.meetsMinimum}
+            className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Checkout
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function NutritionPanel({
+  facts,
+  orderSummary,
+  onUpdateQuantity,
+  onCheckout,
+}: NutritionPanelProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
       {/* ── Desktop sticky panel ── */}
-      <div className="nutrition-panel hidden lg:block bg-[var(--color-ink)] text-[var(--color-cream)] rounded-2xl p-6 sticky top-28">
-        {/* Header with subtotal */}
-        <div className="border-b border-white/20 pb-4 mb-4">
-          <div className="flex items-center justify-between mb-1">
+      <div className="hidden lg:block sticky top-28 space-y-4">
+        <div className="nutrition-panel bg-[var(--color-ink)] text-[var(--color-cream)] rounded-2xl p-6">
+          <div className="border-b border-white/20 pb-4 mb-4">
             <h3 className="font-display text-xl font-bold">Nutrition Facts</h3>
-            {total !== undefined && (
-              <span className="text-sm font-bold text-[var(--color-amber)]">
-                ${total.toFixed(2)} CAD
-              </span>
-            )}
+            <p className="text-xs text-white/50">Per 16 oz bottle</p>
           </div>
-          <p className="text-xs text-white/50">Per 16 oz bottle</p>
+          <PanelContent facts={facts} />
         </div>
-
-        <PanelContent facts={facts} />
+        {orderSummary && (
+          <OrderSummaryCard
+            data={orderSummary}
+            onUpdateQuantity={onUpdateQuantity}
+            onCheckout={onCheckout}
+          />
+        )}
       </div>
 
       {/* ── Mobile compact bottom bar ── */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40">
         {/* Expanded sheet */}
         {mobileOpen && (
-          <div className="nutrition-panel bg-[var(--color-ink)] text-[var(--color-cream)] px-5 pt-5 pb-4 max-h-[70vh] overflow-y-auto">
-            <div className="border-b border-white/20 pb-4 mb-4">
-              <div className="flex items-center justify-between mb-1">
+          <div className="bg-[var(--color-cream)] px-5 pt-5 pb-4 max-h-[70vh] overflow-y-auto space-y-4">
+            <div className="nutrition-panel bg-[var(--color-ink)] text-[var(--color-cream)] rounded-2xl p-5">
+              <div className="border-b border-white/20 pb-4 mb-4">
                 <h3 className="font-display text-xl font-bold">Nutrition Facts</h3>
-                {total !== undefined && (
-                  <span className="text-sm font-bold text-[var(--color-amber)]">
-                    ${total.toFixed(2)} CAD
-                  </span>
-                )}
+                <p className="text-xs text-white/50">Per 16 oz bottle</p>
               </div>
-              <p className="text-xs text-white/50">Per 16 oz bottle</p>
+              <PanelContent facts={facts} />
             </div>
-            <PanelContent facts={facts} />
+            {orderSummary && (
+              <OrderSummaryCard
+                data={orderSummary}
+                onUpdateQuantity={onUpdateQuantity}
+                onCheckout={onCheckout}
+              />
+            )}
           </div>
         )}
 
@@ -185,15 +340,17 @@ export default function NutritionPanel({ facts, total }: NutritionPanelProps) {
         >
           <div className="flex items-center gap-4 text-sm">
             <span>
-              <span className="font-bold text-[var(--color-amber)]">{facts.calories}</span>
-              <span className="text-white/60 ml-1">kcal</span>
+              <span className="font-bold text-white">{facts.calories}</span>
+              <span className="text-white/60 ml-1">cal</span>
             </span>
             <span>
               <span className="font-bold">{facts.protein}g</span>
               <span className="text-white/60 ml-1">protein</span>
             </span>
-            {total !== undefined && (
-              <span className="font-bold text-[var(--color-amber)]">${total.toFixed(2)}</span>
+            {orderSummary && orderSummary.itemCount > 0 && (
+              <span>
+                <span className="font-bold text-white">${orderSummary.total.toFixed(2)}</span>
+              </span>
             )}
           </div>
           <svg
@@ -209,7 +366,7 @@ export default function NutritionPanel({ facts, total }: NutritionPanelProps) {
       </div>
 
       {/* Spacer so builder content isn't hidden behind mobile bar */}
-      <div className="h-16 lg:hidden" />
+      <div className="h-20 lg:hidden" />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useCart } from "./CartProvider";
 
 const links = [
   { href: "/", label: "Home" },
@@ -25,6 +26,7 @@ export default function Nav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { totals } = useCart();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -42,7 +44,7 @@ export default function Nav() {
       <div className="announcement-bar bg-[var(--color-cream)] border-b border-[var(--color-amber)] py-2 overflow-hidden">
         <div
           className="flex gap-10 whitespace-nowrap text-xs font-medium tracking-wide text-[var(--color-ink)]"
-          style={{ animation: "ticker 20s linear infinite" }}
+          style={{ animation: "ticker var(--ticker-duration, 20s) linear infinite" }}
         >
           {Array.from({ length: 8 }).flatMap((_, i) =>
             announcementItems.map((item, j) => (
@@ -94,6 +96,22 @@ export default function Nav() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/cart"
+              className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 transition-colors"
+              aria-label={`Cart (${totals.itemCount} items)`}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                <path d="M3 6h18" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              {totals.itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-ink)] text-[var(--color-cream)] text-[10px] font-bold flex items-center justify-center">
+                  {totals.itemCount}
+                </span>
+              )}
+            </Link>
             <Link href="/quiz" className="btn-primary text-xs px-5 py-2.5">
               Build Yours
             </Link>
@@ -145,6 +163,17 @@ export default function Nav() {
               {label}
             </Link>
           ))}
+          <Link
+            href="/cart"
+            className="py-2.5 text-sm font-medium text-[var(--color-ink-muted)] flex items-center justify-between"
+          >
+            <span>Cart</span>
+            {totals.itemCount > 0 && (
+              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--color-ink)] text-[var(--color-cream)] text-[10px] font-bold flex items-center justify-center">
+                {totals.itemCount}
+              </span>
+            )}
+          </Link>
           <div className="pt-3 border-t border-black/5 mt-1">
             <Link href="/quiz" className="btn-primary w-full text-center text-xs py-3">
               Build Yours

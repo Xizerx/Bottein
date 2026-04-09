@@ -466,8 +466,8 @@ export default function LandingPage() {
       {/* ── Marquee / ticker ──────────────────────────────────────────── */}
       <div className="bg-[var(--color-ink)] text-[var(--color-cream)] py-4 overflow-hidden">
         <div
-          className="flex items-center gap-16 whitespace-nowrap"
-          style={{ animation: "ticker 22s linear infinite" }}
+          className="marquee-track flex items-center gap-16 whitespace-nowrap"
+          style={{ animation: "ticker 12s linear infinite" }}
         >
           {Array.from({ length: 6 }).flatMap((_, i) => [
             <span key={`a${i}`} className="text-sm font-medium tracking-wide">Real Fruit Powder</span>,

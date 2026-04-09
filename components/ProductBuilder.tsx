@@ -3,6 +3,9 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import NutritionPanel from "./NutritionPanel";
+import { useRouter } from "next/navigation";
+import { useCart } from "./CartProvider";
+import { MIN_ORDER_QTY } from "@/lib/cart";
 import type {
   ProteinBase,
   FlavorOption,
@@ -18,20 +21,6 @@ const BASE_PRICE = 6.0; // CAD
 const PROTEIN_PRICES: Record<ProteinBase, number> = {
   whey: 0.0,
   plant: 0.5,
-};
-
-const ADDON_PRICES: Record<Addon, number> = {
-  collagen:    1.0,
-  vitaminC:    0.4,
-  vitaminDK2:  0.5,
-  bComplex:    0.45,
-  electrolyte: 0.35,
-  omega3:      0.75,
-  prebiotic:   0.3,
-  konjac:      0.3,
-  psyllium:    0.25,
-  creatine:    0.6,
-  melatonin:   0.4,
 };
 
 // ── Data ───────────────────────────────────────────────────────────────────
@@ -172,6 +161,9 @@ export default function ProductBuilder() {
   const [flavors,   setFlavors]   = useState<FlavorOption[]>(["vanilla"]);
   const [addons,    setAddons]    = useState<Addon[]>([]);
   const [added,     setAdded]     = useState(false);
+  const [qty,       setQty]       = useState(MIN_ORDER_QTY);
+  const { addItem, items: cartItems, totals, updateQuantity } = useCart();
+  const router = useRouter();
 
   // Quiz pre-population state
   const [quizLoaded,        setQuizLoaded]        = useState(false);
@@ -242,12 +234,104 @@ export default function ProductBuilder() {
   const tasteScore = useMemo(() => calcTasteScore(addons, sweetener), [addons, sweetener]);
   const { color: tasteColor, label: tasteLabel } = tasteZone(tasteScore);
 
-  const total = useMemo(() => {
-    const addonTotal = addons.reduce((s, id) => s + (ADDON_PRICES[id] ?? 0), 0);
+  // Per-bottle price for the current in-progress configuration. Used only
+  // as the unit price when adding to cart — not for the order summary,
+  // which reflects the actual cart contents.
+  const currentBottlePrice = useMemo(() => {
+    const addonTotal = addons.reduce(
+      (s, id) => s + (ADDONS.find((a) => a.id === id)?.price ?? 0),
+      0
+    );
     return BASE_PRICE + PROTEIN_PRICES[base] + addonTotal;
   }, [base, addons]);
 
+  const currentLines = useMemo(() => {
+    const baseBottleLabel = "BOTTEIN Bottle";
+    const lines: { label: string; price: number }[] = [
+      { label: baseBottleLabel, price: BASE_PRICE + PROTEIN_PRICES[base] },
+    ];
+    for (const id of addons) {
+      const addon = ADDONS.find((a) => a.id === id);
+      if (addon) lines.push({ label: addon.label, price: addon.price });
+    }
+    return lines;
+  }, [base, addons]);
+
+  // Order summary reflects the real cart state so the side panel stays
+  // in sync with what the user will actually check out with.
+  const orderSummary = useMemo(() => {
+    const proteinLabel: Record<ProteinBase, string> = {
+      whey: "Whey Isolate",
+      plant: "Plant-Based",
+    };
+    const sweetenerLabel: Record<Sweetener, string> = {
+      full_bodied: "Full Bodied",
+      slim: "Slim",
+      lean: "Lean",
+    };
+    const lines = cartItems.map((item) => {
+      const details: { label: string; value: string }[] = [];
+      if (item.kind === "bottle") {
+        details.push({ label: "Protein", value: proteinLabel[item.config.base] });
+        const flavorLabels = item.config.flavors
+          .map((f) => FLAVORS.find((x) => x.id === f)?.label)
+          .filter(Boolean)
+          .join(", ");
+        if (flavorLabels) details.push({ label: "Flavors", value: flavorLabels });
+        details.push({ label: "Sweetener", value: sweetenerLabel[item.config.sweetener] });
+        const addonLabels = item.config.addons
+          .map((id) => ADDONS.find((a) => a.id === id)?.label)
+          .filter(Boolean)
+          .join(", ");
+        details.push({
+          label: "Add-ons",
+          value: addonLabels || "None",
+        });
+        details.push({ label: "Quantity", value: `× ${item.quantity}` });
+        details.push({ label: "Per bottle", value: `$${item.unitPrice.toFixed(2)}` });
+      }
+      const displayName = item.kind === "bottle" ? "BOTTEIN Bottle" : item.name;
+      return {
+        id: item.id,
+        label: `${displayName}${item.quantity > 1 ? ` × ${item.quantity}` : ""}`,
+        price: item.unitPrice * item.quantity,
+        quantity: item.quantity,
+        details,
+      };
+    });
+    return {
+      lines,
+      subtotal: totals.subtotal,
+      tax: totals.tax,
+      total: totals.total,
+      meetsMinimum: totals.meetsMinimum,
+      minQty: totals.minQty,
+      itemCount: totals.itemCount,
+    };
+  }, [cartItems, totals]);
+
   const handleAddToCart = () => {
+    const name = "BOTTEIN Bottle";
+    const flavorLabels = flavors
+      .map((f) => FLAVORS.find((x) => x.id === f)?.label)
+      .filter(Boolean)
+      .join(", ");
+    const description =
+      flavorLabels +
+      (addons.length > 0
+        ? ` + ${addons.length} add-on${addons.length > 1 ? "s" : ""}`
+        : "");
+    addItem(
+      {
+        kind: "bottle",
+        name,
+        description,
+        config: { base, flavors, addons, sweetener },
+        lineItems: currentLines,
+        unitPrice: currentBottlePrice,
+      },
+      qty
+    );
     setAdded(true);
     setTimeout(() => setAdded(false), 2500);
   };
@@ -536,7 +620,7 @@ export default function ProductBuilder() {
 
           {/* CTA */}
           <div className="card-surface p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
+            <div className="flex-1">
               <p className="font-semibold text-[var(--color-ink)]">
                 {base === "whey" ? "Whey Isolate" : "Plant-Based"} bottle
               </p>
@@ -547,24 +631,51 @@ export default function ProductBuilder() {
                   : ""}
               </p>
             </div>
-            <button
-              onClick={handleAddToCart}
-              className={`btn-primary shrink-0 transition-all duration-300 ${
-                added ? "bg-green-600 hover:bg-green-600" : ""
-              }`}
-            >
-              {added ? "Added to Cart" : "Add to Cart"}
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="inline-flex items-center border border-black/15 rounded-full overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-black/5 transition-colors"
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center text-sm font-semibold tabular-nums">{qty}</span>
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => q + 1)}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-black/5 transition-colors"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+              <button
+                onClick={handleAddToCart}
+                className={`btn-primary transition-all duration-300 ${
+                  added ? "bg-green-600 hover:bg-green-600" : ""
+                }`}
+              >
+                {added ? "Added" : "Add to Cart"}
+              </button>
+            </div>
           </div>
 
           <p className="text-xs text-[var(--color-ink-muted)] text-center">
-            Shopify checkout coming soon. Prices shown are estimated in CAD.
+            Minimum order {MIN_ORDER_QTY} bottles. Shipping calculated at checkout.
+            {totals.itemCount > 0 && ` You have ${totals.itemCount} in your cart.`}
           </p>
         </div>
 
         {/* ── Nutrition panel (desktop sticky, mobile compact) ── */}
         <div className="lg:col-span-1">
-          <NutritionPanel facts={nutrition} total={total} />
+          <NutritionPanel
+            facts={nutrition}
+            orderSummary={orderSummary}
+            onUpdateQuantity={updateQuantity}
+            onCheckout={() => router.push("/cart")}
+          />
         </div>
       </div>
     </div>
