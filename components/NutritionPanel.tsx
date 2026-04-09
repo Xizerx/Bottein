@@ -185,15 +185,15 @@ export default function NutritionPanel({ facts, total }: NutritionPanelProps) {
         >
           <div className="flex items-center gap-4 text-sm">
             <span>
-              <span className="font-bold text-[var(--color-amber)]">{facts.calories}</span>
-              <span className="text-white/60 ml-1">kcal</span>
+              <span className="font-bold text-white">{facts.calories}</span>
+              <span className="text-white/60 ml-1">cal</span>
             </span>
             <span>
               <span className="font-bold">{facts.protein}g</span>
               <span className="text-white/60 ml-1">protein</span>
             </span>
             {total !== undefined && (
-              <span className="font-bold text-[var(--color-amber)]">${total.toFixed(2)}</span>
+              <span className="font-bold text-white">${total.toFixed(2)}</span>
             )}
           </div>
           <svg

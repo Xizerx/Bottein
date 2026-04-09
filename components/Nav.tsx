@@ -42,7 +42,7 @@ export default function Nav() {
       <div className="announcement-bar bg-[var(--color-cream)] border-b border-[var(--color-amber)] py-2 overflow-hidden">
         <div
           className="flex gap-10 whitespace-nowrap text-xs font-medium tracking-wide text-[var(--color-ink)]"
-          style={{ animation: "ticker 20s linear infinite" }}
+          style={{ animation: "ticker var(--ticker-duration, 20s) linear infinite" }}
         >
           {Array.from({ length: 8 }).flatMap((_, i) =>
             announcementItems.map((item, j) => (
