@@ -459,9 +459,9 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((feat, i) => (
               <Reveal key={feat.label} delay={i * 120}>
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-8 h-full hover:bg-white/8 transition-colors group">
+                <div className="feature-card bg-white/5 border border-white/10 rounded-2xl p-8 h-full hover:bg-white/8 transition-colors group">
                   <div className="text-4xl mb-6">{feat.icon}</div>
-                  <p className="text-xs font-semibold tracking-[0.15em] uppercase text-[var(--color-amber)] mb-2">
+                  <p className="feature-card-label text-xs font-semibold tracking-[0.15em] uppercase text-[var(--color-amber)] mb-2">
                     {feat.label}
                   </p>
                   <h3 className="font-display text-xl font-bold text-white mb-3 leading-snug">
@@ -555,7 +555,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Waitlist ──────────────────────────────────────────────────── */}
-      <section id="waitlist" className="py-24 md:py-32 bg-[var(--color-amber)] text-[var(--color-ink)]">
+      <section id="waitlist" className="waitlist-section py-24 md:py-32 bg-[var(--color-amber)] text-[var(--color-ink)]">
         <div className="container-site max-w-2xl text-center">
           <Reveal>
             <p className="section-label mb-4 text-[var(--color-ink)]/60">Limited Early Access</p>

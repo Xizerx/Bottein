@@ -169,6 +169,48 @@ html.bw .announcement-bar {
   border-bottom-color: #333 !important;
   color: #fff !important;
 }
+/* Cascade white text to children that carry their own Tailwind color class */
+html.bw .announcement-bar *  {
+  color: #fff !important;
+}
+
+/* Feature cards inside the dark ink-background section ──────────────────── */
+/* In B&W mode --color-amber resolves to #000, making labels invisible on the
+   near-black card surface. Override to legible white-tinted values. */
+html.bw .feature-card {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+  border-color:     rgba(255, 255, 255, 0.18) !important;
+}
+html.bw .feature-card:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+html.bw .feature-card-label {
+  color: rgba(255, 255, 255, 0.70) !important;
+}
+
+/* Waitlist section: bg-[var(--color-amber)] resolves to black in B&W,
+   and all text uses --color-ink which is also black → invisible. */
+html.bw .waitlist-section {
+  background-color: #111 !important;
+}
+html.bw .waitlist-section,
+html.bw .waitlist-section * {
+  color: #fff !important;
+}
+html.bw .waitlist-section input {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.bw .waitlist-section input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Nutrition panel: --color-amber is #000 in B&W, making the DVBar fills
+   and accent text invisible on the dark panel. Locally override amber to
+   white so progress bars and text are legible. */
+html.bw .nutrition-panel {
+  --color-amber: #ffffff;
+}
 
 /* ── Utility classes ──────────────────────────────────────────────────────── */
 @layer components {
