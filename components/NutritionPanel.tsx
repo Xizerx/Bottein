@@ -140,7 +140,7 @@ export default function NutritionPanel({ facts, total }: NutritionPanelProps) {
   return (
     <>
       {/* ── Desktop sticky panel ── */}
-      <div className="nutrition-panel hidden lg:block bg-[var(--color-ink)] text-[var(--color-cream)] rounded-2xl p-6 sticky top-6">
+      <div className="nutrition-panel hidden lg:block bg-[var(--color-ink)] text-[var(--color-cream)] rounded-2xl p-6 sticky top-28">
         {/* Header with subtotal */}
         <div className="border-b border-white/20 pb-4 mb-4">
           <div className="flex items-center justify-between mb-1">

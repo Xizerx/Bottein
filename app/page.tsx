@@ -52,13 +52,67 @@ function Reveal({
 }
 
 // ── Bottle illustration ───────────────────────────────────────────────────
+function ScrollCue() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const progress = Math.min(y / 200, 1);
+      el.style.opacity = String(0.4 * (1 - progress));
+      el.style.transform = `translate(-50%, ${-y * 0.6}px)`;
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className="absolute bottom-8 left-1/2 flex flex-col items-center gap-1.5 pointer-events-none"
+      style={{ willChange: "transform, opacity" }}
+    >
+      <span className="text-xs tracking-widest uppercase text-[var(--color-ink-muted)]">Scroll</span>
+      <div className="w-px h-8 bg-[var(--color-ink-muted)] animate-pulse" />
+    </div>
+  );
+}
+
 function BottleIllustration() {
+  const bottleRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = bottleRef.current;
+    if (!el) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      el.style.transform = `rotateY(${window.scrollY * 0.4}deg)`;
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
   return (
     <div
       className="relative flex items-center justify-center select-none"
       style={{ perspective: "700px" }}
     >
-      <div className="bottle-spin">
+      <div ref={bottleRef} style={{ transformStyle: "preserve-3d", willChange: "transform" }}>
         <svg
           viewBox="0 0 100 165"
           width="240"
@@ -212,21 +266,44 @@ const steps = [
   },
 ];
 
+const LeafIcon = () => (
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 4C12 4 4 8 4 16c0 2 1 4 1 4s4-1 8-1 8-3 8-8c0-4-1-7-1-7z" />
+    <path d="M4 20c4-8 10-12 16-14" />
+  </svg>
+);
+
+const BrainIcon = () => (
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9.5 3a3 3 0 0 0-3 3v.5A3 3 0 0 0 4 9.5v1A3 3 0 0 0 5.5 13a3 3 0 0 0 1 2.5V17a3 3 0 0 0 3 3 2.5 2.5 0 0 0 2.5-2.5V4.5A1.5 1.5 0 0 0 10.5 3z" />
+    <path d="M14.5 3a3 3 0 0 1 3 3v.5A3 3 0 0 1 20 9.5v1A3 3 0 0 1 18.5 13a3 3 0 0 1-1 2.5V17a3 3 0 0 1-3 3A2.5 2.5 0 0 1 12 17.5V4.5A1.5 1.5 0 0 1 13.5 3z" />
+  </svg>
+);
+
+const PaletteIcon = () => (
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2 0-.5-.3-1-.6-1.4-.3-.4-.4-.7-.4-1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5A9 9 0 0 0 12 3z" />
+    <circle cx="7.5" cy="10.5" r="1" fill="currentColor" />
+    <circle cx="12" cy="7.5" r="1" fill="currentColor" />
+    <circle cx="16.5" cy="10.5" r="1" fill="currentColor" />
+  </svg>
+);
+
 const features = [
   {
-    icon: "🍓",
+    Icon: LeafIcon,
     label: "Real Fruit Powder",
     title: "Zero artificial anything.",
     desc: "Every flavor is crafted from real freeze-dried fruit. What you taste is what's in the bottle. Nothing more.",
   },
   {
-    icon: "🧠",
+    Icon: BrainIcon,
     label: "AI Formulation",
     title: "Precision you can't get at GNC.",
     desc: "Your formula is built from clinical dosing data, then verified by registered nutritionists before it ships.",
   },
   {
-    icon: "🎨",
+    Icon: PaletteIcon,
     label: "Mix and Match",
     title: "Never get bored again.",
     desc: "Pick up to 3 flavors per bottle. Rotate them each month. Every order can be different, or exactly the same.",
@@ -383,10 +460,7 @@ export default function LandingPage() {
         </div>
 
         {/* Scroll cue */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 opacity-40">
-          <span className="text-xs tracking-widest uppercase text-[var(--color-ink-muted)]">Scroll</span>
-          <div className="w-px h-8 bg-[var(--color-ink-muted)] animate-pulse" />
-        </div>
+        <ScrollCue />
       </section>
 
       {/* ── Marquee / ticker ──────────────────────────────────────────── */}
@@ -460,7 +534,7 @@ export default function LandingPage() {
             {features.map((feat, i) => (
               <Reveal key={feat.label} delay={i * 120}>
                 <div className="feature-card bg-white/5 border border-white/10 rounded-2xl p-8 h-full hover:bg-white/8 transition-colors group">
-                  <div className="text-4xl mb-6">{feat.icon}</div>
+                  <div className="mb-6 text-white"><feat.Icon /></div>
                   <p className="feature-card-label text-xs font-semibold tracking-[0.15em] uppercase text-[var(--color-amber)] mb-2">
                     {feat.label}
                   </p>

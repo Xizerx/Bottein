@@ -81,17 +81,7 @@ function quizReducer(state: QuizAnswers, action: QuizAction): QuizAnswers {
 // ── Data ───────────────────────────────────────────────────────────────────
 
 const GOALS: { id: Goal; icon: React.ReactNode; label: string; desc: string }[] = [
-  {
-    id: "weight_loss",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2C8 2 4 6 4 10c0 5 6 10 8 12 2-2 8-7 8-12 0-4-4-8-8-8z" />
-        <path d="M12 6c-1.5 0-3 1.5-3 3" />
-      </svg>
-    ),
-    label: "Appetite Control",
-    desc: "Feel fuller, manage cravings",
-  },
+  { id: "weight_loss", icon: "🍽️", label: "Meal Replacement", desc: "Feel fuller, manage cravings" },
   { id: "focus",    icon: "🎯", label: "Focus and Cognition",  desc: "Sharpen mental clarity and sustained attention" },
   { id: "sleep",    icon: "🌙", label: "Sleep and Recovery",   desc: "Wind down faster, wake up restored" },
   { id: "fitness",  icon: "💪", label: "Fitness and Strength", desc: "Build muscle, improve endurance" },
