@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <p
-              className="text-3xl font-bold tracking-tight mb-3"
+              className="text-3xl font-bold tracking-tight mb-3 text-[var(--color-cream)]"
               style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
             >
               BOTTEIN
