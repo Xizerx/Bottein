@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function BuilderPage() {
   return (
     <div className="min-h-screen bg-[var(--color-cream)] pt-32 pb-20">
-      <div className="container-site">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8">
         {/* Header */}
         <div className="max-w-xl mb-12">
           <p className="section-label mb-3">Formula Builder</p>
