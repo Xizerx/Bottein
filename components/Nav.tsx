@@ -8,7 +8,6 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/quiz", label: "Quiz" },
   { href: "/builder", label: "Builder" },
-  { href: "/about", label: "About" },
 ];
 
 const announcementItems = [

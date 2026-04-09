@@ -9,7 +9,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-white/10">
           {/* Brand */}
           <div>
-            <p className="font-display text-3xl font-bold tracking-tight mb-3">
+            <p
+              className="text-3xl font-bold tracking-tight mb-3"
+              style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
+            >
               BOTTEIN
             </p>
             <p className="text-sm text-white/50 leading-relaxed max-w-xs">
@@ -43,7 +46,6 @@ export default function Footer() {
                 { href: "/", label: "Home" },
                 { href: "/quiz", label: "Take the Quiz" },
                 { href: "/builder", label: "Formula Builder" },
-                { href: "/about", label: "Our Story" },
               ].map(({ href, label }) => (
                 <li key={href}>
                   <Link
@@ -94,10 +96,8 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
-          <p>© {new Date().getFullYear()} Bottein Inc. All rights reserved.</p>
-          <p>
-            Founded by Yushu Wang, Christina Sun &amp; Martin Shanahan.
-          </p>
+          <p>© {new Date().getFullYear()} BOTTEIN Inc. All rights reserved.</p>
+          <p>Founded by Yushu Wang.</p>
         </div>
       </div>
     </footer>
