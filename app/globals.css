@@ -84,10 +84,19 @@ body {
   to   { transform: translate3d(-50%, 0, 0); }
 }
 
+.announcement-bar {
+  /* Promote to its own compositor layer so layout/scroll work elsewhere
+     on the page (e.g. the sticky nutrition panel on the builder) cannot
+     pause or stutter the marquee animation on mobile browsers. */
+  transform: translateZ(0);
+  contain: paint;
+}
+
 .announcement-bar > div,
 .marquee-track {
   will-change: transform;
   backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 @media (max-width: 768px) {
