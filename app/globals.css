@@ -163,6 +163,13 @@ html.bw select:focus {
   box-shadow: 0 0 0 2px rgba(0,0,0,0.15) !important;
 }
 
+/* Announcement bar on b&w branch */
+html.bw .announcement-bar {
+  background-color: #000 !important;
+  border-bottom-color: #333 !important;
+  color: #fff !important;
+}
+
 /* ── Utility classes ──────────────────────────────────────────────────────── */
 @layer components {
   .btn-primary {
@@ -200,6 +207,7 @@ html.bw select:focus {
   .heading-display {
     font-family: var(--font-display);
     @apply font-bold leading-tight text-[var(--color-ink)];
+    text-wrap: balance;
   }
 
   .card-surface {

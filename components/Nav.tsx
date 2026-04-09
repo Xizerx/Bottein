@@ -11,6 +11,17 @@ const links = [
   { href: "/about", label: "About" },
 ];
 
+const announcementItems = [
+  "Real fruit. Real protein. Coming soon.",
+  "•",
+  "Early access open",
+  "•",
+  "Real fruit. Real protein. Coming soon.",
+  "•",
+  "Early access open",
+  "•",
+];
+
 export default function Nav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -22,75 +33,96 @@ export default function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close menu on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-[var(--color-cream)]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(0,0,0,0.06)]"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="container-site flex items-center justify-between h-16 md:h-18">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="font-display text-2xl font-bold tracking-tight text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors"
+    <header className="fixed top-0 left-0 right-0 z-50">
+      {/* ── Announcement bar ── */}
+      <div className="announcement-bar bg-[var(--color-cream)] border-b border-[var(--color-amber)] py-2 overflow-hidden">
+        <div
+          className="flex gap-10 whitespace-nowrap text-xs font-medium tracking-wide text-[var(--color-ink)]"
+          style={{ animation: "ticker 20s linear infinite" }}
         >
-          BOTTEIN
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8">
-          {links.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`text-sm font-medium transition-colors ${
-                pathname === href
-                  ? "text-[var(--color-amber)]"
-                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center gap-3">
-          <Link href="/quiz" className="btn-primary text-xs px-5 py-2.5">
-            Build Yours
-          </Link>
+          {Array.from({ length: 8 }).flatMap((_, i) =>
+            announcementItems.map((item, j) => (
+              <span
+                key={`${i}-${j}`}
+                className={item === "•" ? "text-[var(--color-amber)]" : ""}
+              >
+                {item}
+              </span>
+            ))
+          )}
         </div>
+      </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5"
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Toggle menu"
-          aria-expanded={menuOpen}
-        >
-          <span
-            className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
-              menuOpen ? "w-5 translate-y-2 rotate-45" : "w-5"
-            }`}
-          />
-          <span
-            className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
-              menuOpen ? "w-0 opacity-0" : "w-4"
-            }`}
-          />
-          <span
-            className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
-              menuOpen ? "w-5 -translate-y-2 -rotate-45" : "w-5"
-            }`}
-          />
-        </button>
+      {/* ── Main nav ── */}
+      <div
+        className={`transition-all duration-300 ${
+          scrolled
+            ? "bg-[var(--color-cream)]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(0,0,0,0.06)]"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="container-site flex items-center justify-between h-16 md:h-18">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="font-display text-2xl font-bold tracking-tight text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors"
+          >
+            BOTTEIN
+          </Link>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            {links.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`text-sm font-medium transition-colors ${
+                  pathname === href
+                    ? "text-[var(--color-amber)]"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Desktop CTA */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link href="/quiz" className="btn-primary text-xs px-5 py-2.5">
+              Build Yours
+            </Link>
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+          >
+            <span
+              className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
+                menuOpen ? "w-5 translate-y-2 rotate-45" : "w-5"
+              }`}
+            />
+            <span
+              className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
+                menuOpen ? "w-0 opacity-0" : "w-4"
+              }`}
+            />
+            <span
+              className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
+                menuOpen ? "w-5 -translate-y-2 -rotate-45" : "w-5"
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}

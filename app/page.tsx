@@ -203,7 +203,7 @@ const steps = [
   {
     number: "02",
     title: "Get Your Formula",
-    desc: "Our AI, verified by nutrition experts, assembles a protein blend calibrated to your exact needs.",
+    desc: "Our algorithm, verified by nutrition experts, assembles a protein blend calibrated to your exact needs.",
   },
   {
     number: "03",
@@ -242,9 +242,9 @@ const testimonials = [
   },
   {
     quote:
-      "The quiz nailed it. I told it I was a light sleeper and focused on recovery, the formula had collagen and the right sleep support. Exactly what I'd have picked.",
-    name: "James K.",
-    role: "Software engineer, 29",
+      "I picked Sleep and Recovery and the formula came back with collagen and the right sleep support. It knew exactly what I needed without me having to explain anything.",
+    name: "Jamie L.",
+    role: "Developer, Toronto",
   },
   {
     quote:
@@ -309,14 +309,14 @@ export default function LandingPage() {
 
               {/* Subtitle */}
               <p
-                className="text-xl md:text-2xl font-semibold text-[var(--color-ink)] mb-3 leading-snug"
+                className="text-xl md:text-2xl font-semibold text-[var(--color-ink)] mb-3 leading-snug max-w-sm"
                 style={{
                   opacity: heroVisible ? 1 : 0,
                   transform: heroVisible ? "none" : "translateY(20px)",
                   transition: "opacity 0.65s ease 300ms, transform 0.65s ease 300ms",
                 }}
               >
-                Pre-portioned. Just add water. Shake and go.
+                Pre-portioned. Just add water.{"\u00A0"}Shake&nbsp;and&nbsp;go.
               </p>
               <p
                 className="text-base text-[var(--color-ink-muted)] max-w-md leading-relaxed mb-10"
@@ -326,8 +326,9 @@ export default function LandingPage() {
                   transition: "opacity 0.65s ease 360ms, transform 0.65s ease 360ms",
                 }}
               >
-                Science-backed formulas in a sealed 16 oz bottle. Built for young
-                professionals who don&apos;t want to compromise.
+                Real fruit flavours, zero artificial ingredients. Science-backed
+                formulas sealed in a 16&nbsp;oz bottle, built for people who refuse
+                to compromise on what goes in their body.
               </p>
 
               {/* CTAs */}
@@ -397,7 +398,7 @@ export default function LandingPage() {
           {Array.from({ length: 6 }).flatMap((_, i) => [
             <span key={`a${i}`} className="text-sm font-medium tracking-wide">Real Fruit Powder</span>,
             <span key={`b${i}`} className="text-[var(--color-amber)]">✦</span>,
-            <span key={`c${i}`} className="text-sm font-medium tracking-wide">AI-Verified Formulas</span>,
+            <span key={`c${i}`} className="text-sm font-medium tracking-wide">Expert-verified Formulas</span>,
             <span key={`d${i}`} className="text-[var(--color-amber)]">✦</span>,
             <span key={`e${i}`} className="text-sm font-medium tracking-wide">Snap. Add Water. Shake.</span>,
             <span key={`f${i}`} className="text-[var(--color-amber)]">✦</span>,

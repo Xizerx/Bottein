@@ -87,8 +87,8 @@ export default function AboutPage() {
                 their bodies need and what they&apos;re actually getting.
               </p>
               <p className="text-[var(--color-ink-muted)] leading-relaxed">
-                Bottein uses AI-assisted formulation—validated by registered
-                nutritionists—to give everyone access to the kind of personalized
+                Bottein uses algorithm-assisted formulation, validated by registered
+                nutritionists, to give everyone access to the kind of personalized
                 nutrition that used to require a private dietitian and a research
                 lab.
               </p>
