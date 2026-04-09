@@ -339,16 +339,45 @@ const testimonials = [
 
 export default function LandingPage() {
   const [heroVisible, setHeroVisible] = useState(false);
+  // 0 → bottle fully visible, 1 → bottle fully faded/diffused (mobile only)
+  const [bottleFade, setBottleFade] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroVisible(true), 80);
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      // Effect is mobile-only; neutralise on lg+ screens
+      if (window.innerWidth >= 1024) {
+        setBottleFade(0);
+        return;
+      }
+      // Fade completes over ~70% of viewport scroll
+      const maxScroll = window.innerHeight * 0.7;
+      const progress = Math.min(window.scrollY / maxScroll, 1);
+      setBottleFade(progress);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", update);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <div>
       {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex items-center overflow-hidden bg-[var(--color-cream)]">
+      <section className="relative min-h-screen bg-[var(--color-cream)] lg:flex lg:items-center">
         {/* Background gradient */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -360,10 +389,10 @@ export default function LandingPage() {
         />
 
         <div className="container-site w-full pt-28 pb-20 md:pt-36 md:pb-28">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 lg:items-center">
 
             {/* ── Left: text ── */}
-            <div>
+            <div className="order-2 lg:order-1 relative z-10">
               {/* Eyebrow */}
               <div
                 className="section-label mb-6"
@@ -452,15 +481,28 @@ export default function LandingPage() {
             </div>
 
             {/* ── Right: bottle ── */}
-            <div
-              className="flex items-center justify-center"
-              style={{
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? "none" : "translateY(30px)",
-                transition: "opacity 0.9s ease 500ms, transform 0.9s ease 500ms",
-              }}
-            >
-              <Bottle3D />
+            {/* Outer: sticky on mobile (transform must NOT be here — it breaks sticky) */}
+            <div className="order-1 lg:order-2 lg:flex lg:items-center lg:justify-center bottle-sticky-mobile">
+              {/* Scroll-linked fade + diffusion blur (mobile only; values are 0 on desktop) */}
+              <div
+                style={{
+                  opacity: 1 - bottleFade * 0.92,
+                  filter: `blur(${bottleFade * 16}px) saturate(${1 - bottleFade * 0.4})`,
+                  willChange: "opacity, filter",
+                }}
+              >
+                {/* Hero entry animation */}
+                <div
+                  className="flex items-center justify-center"
+                  style={{
+                    opacity: heroVisible ? 1 : 0,
+                    transform: heroVisible ? "none" : "translateY(30px)",
+                    transition: "opacity 0.9s ease 500ms, transform 0.9s ease 500ms",
+                  }}
+                >
+                  <Bottle3D />
+                </div>
+              </div>
             </div>
           </div>
         </div>

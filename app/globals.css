@@ -233,6 +233,49 @@ html.bw .nutrition-panel {
   --color-amber: #ffffff;
 }
 
+/* ── Desktop bottle bottom fade ──────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .bottle-sticky-mobile {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 62%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 62%,
+      transparent 100%
+    );
+  }
+}
+
+/* ── Mobile sticky bottle ────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .bottle-sticky-mobile {
+    position: sticky;
+    top: 100px; /* clears fixed announcement bar + nav (~100px) */
+    align-self: start;
+    z-index: 0; /* sit behind the text that scrolls over it */
+    pointer-events: none; /* let touches pass through to content below */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 16%,
+      black 58%,
+      transparent 82%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 16%,
+      black 58%,
+      transparent 82%
+    );
+  }
+}
+
 /* ── Utility classes ──────────────────────────────────────────────────────── */
 @layer components {
   .btn-primary {

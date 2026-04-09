@@ -26,6 +26,33 @@ const CAP_R = 0.35; // cap radius (round)
 const CAP_H = 0.24;
 const SHOULDER_H = 0.2;
 
+/* ── BOTTEIN label tuning ────────────────────────────────────────────
+   Tweak these to reposition / resize the vertical "BOTTEIN" label on
+   the front face of the bottle. Positions are in world units (same as
+   BODY_W/H/D above). Z stays slightly in front of the front face.
+
+   ─ Coordinate reference ─
+     x:  left (−) ↔ right (+) on the bottle face
+     y:  bottom (−) ↔ top (+) on the bottle face
+     z:  sits just in front of the front face (BODY_D/2 + small offset)
+
+   distanceFactor → bigger number = SMALLER text on screen
+   fontSize       → raw text size before distanceFactor scaling
+   ──────────────────────────────────────────────────────────────────── */
+const LABEL_MOBILE = {
+  position: [BODY_W / 2 - 0.18, BODY_H / 2 - 0.75, BODY_D / 2 + 0.06] as [number, number, number],
+  distanceFactor: 4,
+  fontSize: "24px",
+  letterSpacing: "0.12em",
+};
+
+const LABEL_DESKTOP = {
+  position: [BODY_W / 2 - 0.25, BODY_H / 2 - 0.3, BODY_D / 2 + 0.06] as [number, number, number],
+  distanceFactor: 5,
+  fontSize: "20px",
+  letterSpacing: "0.1em",
+};
+
 // Flavors — each reload picks one at random
 const FLAVORS: { name: string; fruits: string[] }[] = [
   { name: "blueberry", fruits: ["🫐", "🫐", "🫐"] },
@@ -104,9 +131,24 @@ const EMOJIS = EMOJI_LIST.map((e, i) => ({
 }));
 
 
+// Detects whether the viewport is below the `lg` Tailwind breakpoint (1024px).
+// Drives which LABEL_* config is used for the BOTTEIN label.
+// NOTE: intentionally captured ONCE on mount — we don't listen to resize.
+// Re-switching the label config mid-resize causes a visible jump between
+// LABEL_MOBILE and LABEL_DESKTOP, so we lock it to the initial viewport.
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(window.matchMedia("(max-width: 1023px)").matches);
+  }, []);
+  return isMobile;
+}
+
 function BottleModel() {
   const groupRef = useRef<THREE.Group>(null!);
   const [scrollY, setScrollY] = useState(0);
+  const isMobile = useIsMobile();
+  const label = isMobile ? LABEL_MOBILE : LABEL_DESKTOP;
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
@@ -118,7 +160,7 @@ function BottleModel() {
   useFrame(() => {
     if (!groupRef.current) return;
     // Y rotation: twist based on scroll (full 360° over ~2000px scroll)
-    const targetY = scrollY * 0.003;
+    const targetY = scrollY * 0.001;
     groupRef.current.rotation.y +=
       (targetY - groupRef.current.rotation.y) * 0.08;
     // X tilt: slight forward lean as user scrolls
@@ -251,19 +293,19 @@ function BottleModel() {
         <FallingEmoji key={`emoji-${i}`} emoji={emoji} index={i} scrollY={scrollY} />
       ))}
 
-      {/* ── BOTTEIN label (top-right corner, vertical) ── */}
-      <group position={[BODY_W / 2 - 0.18, BODY_H / 2 - 0.75, BODY_D / 2 + 0.06]}>
+      {/* ── BOTTEIN label ── (config in LABEL_MOBILE / LABEL_DESKTOP at top of file) */}
+      <group position={label.position}>
         <Html
           center
           transform
-          distanceFactor={4}
+          distanceFactor={label.distanceFactor}
           zIndexRange={[10, 10]}
           rotation={[0, 0, -Math.PI / 2]}
           style={{
             fontFamily: "'Inter', sans-serif",
             fontWeight: 800,
-            fontSize: "24px",
-            letterSpacing: "0.12em",
+            fontSize: label.fontSize,
+            letterSpacing: label.letterSpacing,
             color: "#111111",
             userSelect: "none",
             pointerEvents: "none",
@@ -367,7 +409,7 @@ export default function Bottle3D() {
     >
       <Canvas
         camera={{ position: [0, 0, 7.5], fov: 28 }}
-        style={{ touchAction: "none" }}
+        style={{ touchAction: "pan-y" }}
         gl={{ antialias: true, alpha: true }}
         dpr={[1, 2]}
       >
