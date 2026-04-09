@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function BuilderPage() {
   return (
-    <div className="min-h-screen bg-[var(--color-cream)] pt-24 pb-20">
+    <div className="min-h-screen bg-[var(--color-cream)] pt-32 pb-20">
       <div className="container-site">
         {/* Header */}
         <div className="max-w-xl mb-12">

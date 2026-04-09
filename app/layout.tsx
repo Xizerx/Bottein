@@ -9,12 +9,12 @@ export const metadata: Metadata = {
     template: "%s | Bottein",
   },
   description:
-    "Science-backed, AI-formulated protein tailored to your goals. Real fruit powder, mix-and-match flavors, zero compromises.",
+    "Science-backed, expert-formulated protein tailored to your goals. Real fruit powder, mix-and-match flavors, zero compromises.",
   metadataBase: new URL("https://bottein.ca"),
   openGraph: {
     title: "Bottein — Your Protein. Personalized.",
     description:
-      "Science-backed, AI-formulated protein tailored to your goals.",
+      "Science-backed, expert-formulated protein tailored to your goals.",
     url: "https://bottein.ca",
     siteName: "Bottein",
     locale: "en_CA",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Bottein — Your Protein. Personalized.",
     description:
-      "Science-backed, AI-formulated protein tailored to your goals.",
+      "Science-backed, expert-formulated protein tailored to your goals.",
   },
 };
 

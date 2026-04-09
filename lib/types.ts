@@ -10,6 +10,8 @@ export type Goal =
 
 export type ProteinBase = "plant" | "whey";
 
+export type Sweetener = "natural" | "light" | "none";
+
 export type FlavorOption =
   | "mango"
   | "strawberry"
@@ -37,11 +39,28 @@ export interface QuizAnswers {
   goals: Goal[];
   proteinBase: ProteinBase | null;
   allergies: string[];
+  sweetener: Sweetener | null;
   flavors: FlavorOption[];
   age: string | null;
   height: string | null;
   weight: string | null;
   activityLevel: ActivityLevel | null;
+}
+
+// ─── Quiz result stored in localStorage ──────────────────────────────────────
+
+export interface StoredQuizResult {
+  goals: Goal[];
+  proteinBase: ProteinBase | null;
+  allergies: string[];
+  sweetener: Sweetener | null;
+  flavors: FlavorOption[];
+  age: string | null;
+  height: string | null;
+  weight: string | null;
+  activityLevel: ActivityLevel | null;
+  autoAddons: Addon[];
+  timestamp: number;
 }
 
 // ─── Formula ─────────────────────────────────────────────────────────────────
@@ -66,32 +85,32 @@ export interface Formula {
   proteinBase: ProteinBase;
   flavors: FlavorOption[];
   addons: FormulaAddons;
-  servingSize: number; // grams
-  pricePerUnit: number; // CAD cents
+  servingSize: number;
+  pricePerUnit: number;
 }
 
 // ─── Nutrition ───────────────────────────────────────────────────────────────
 
 export interface NutritionFacts {
   calories: number;
-  protein: number;   // g
-  carbs: number;     // g
-  fat: number;       // g
-  fiber: number;     // g
-  sugar: number;     // g
-  sodium: number;    // mg
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  sugar: number;
+  sodium: number;
   addons: {
-    creatine?: number;    // g
-    collagen?: number;    // g
-    vitaminC?: number;    // mg
+    creatine?: number;
+    collagen?: number;
+    vitaminC?: number;
     vitaminDK2?: boolean;
     bComplex?: boolean;
     electrolyte?: boolean;
-    omega3?: number;      // mg
-    prebiotic?: number;   // g
-    konjac?: number;      // g
-    psyllium?: number;    // g
-    melatonin?: number;   // mg
+    omega3?: number;
+    prebiotic?: number;
+    konjac?: number;
+    psyllium?: number;
+    melatonin?: number;
   };
 }
 
