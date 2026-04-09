@@ -151,9 +151,21 @@ function BottleModel() {
   const label = isMobile ? LABEL_MOBILE : LABEL_DESKTOP;
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
+    // rAF-throttled — avoids a setState on every scroll event, which on
+    // mobile can fire dozens of times per frame during momentum scroll.
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      setScrollY(window.scrollY);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   // Scroll-driven twist with slight tilt
@@ -401,7 +413,7 @@ function FallingEmoji({ emoji, index, scrollY }: { emoji: typeof EMOJIS[0]; inde
   );
 }
 
-export default function Bottle3D() {
+export default function Bottle3D({ paused = false }: { paused?: boolean }) {
   return (
     <div
       className="relative flex items-center justify-center select-none"
@@ -411,7 +423,13 @@ export default function Bottle3D() {
         camera={{ position: [0, 0, 7.5], fov: 28 }}
         style={{ touchAction: "pan-y" }}
         gl={{ antialias: true, alpha: true }}
-        dpr={[1, 2]}
+        // Lower pixel ratio ceiling — transmission + clearcoat at 2x dpr
+        // is the biggest GPU cost on mobile, and the bottle is blurred/small
+        // enough that 1.5x looks identical to 2x.
+        dpr={[1, 1.5]}
+        // Stop the render loop entirely when the caller flags the bottle as
+        // offscreen/faded. Resumes automatically when `paused` flips back.
+        frameloop={paused ? "never" : "always"}
       >
         <ambientLight intensity={0.5} />
         <directionalLight position={[4, 5, 4]} intensity={0.9} castShadow />

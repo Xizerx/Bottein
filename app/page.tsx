@@ -483,12 +483,13 @@ export default function LandingPage() {
             {/* ── Right: bottle ── */}
             {/* Outer: sticky on mobile (transform must NOT be here — it breaks sticky) */}
             <div className="order-1 lg:order-2 lg:flex lg:items-center lg:justify-center bottle-sticky-mobile">
-              {/* Scroll-linked fade + diffusion blur (mobile only; values are 0 on desktop) */}
+              {/* Scroll-linked fade + light blur (mobile only; values are 0 on desktop).
+                  Blur capped at 6px — larger radii tank compositor perf on phones. */}
               <div
                 style={{
-                  opacity: 1 - bottleFade * 0.92,
-                  filter: `blur(${bottleFade * 16}px) saturate(${1 - bottleFade * 0.4})`,
-                  willChange: "opacity, filter",
+                  opacity: 1 - bottleFade * 0.95,
+                  filter: bottleFade > 0 ? `blur(${bottleFade * 6}px)` : undefined,
+                  willChange: bottleFade > 0 && bottleFade < 1 ? "opacity, filter" : "auto",
                 }}
               >
                 {/* Hero entry animation */}
@@ -500,7 +501,9 @@ export default function LandingPage() {
                     transition: "opacity 0.9s ease 500ms, transform 0.9s ease 500ms",
                   }}
                 >
-                  <Bottle3D />
+                  {/* Pause 3D render loop once the bottle is effectively invisible,
+                      so GPU stops running the transmission/clearcoat material every frame. */}
+                  <Bottle3D paused={bottleFade > 0.9} />
                 </div>
               </div>
             </div>
