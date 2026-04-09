@@ -466,18 +466,18 @@ export default function LandingPage() {
       {/* ── Marquee / ticker ──────────────────────────────────────────── */}
       <div className="bg-[var(--color-ink)] text-[var(--color-cream)] py-4 overflow-hidden">
         <div
-          className="flex gap-16 whitespace-nowrap"
+          className="flex items-center gap-16 whitespace-nowrap"
           style={{ animation: "ticker 22s linear infinite" }}
         >
           {Array.from({ length: 6 }).flatMap((_, i) => [
             <span key={`a${i}`} className="text-sm font-medium tracking-wide">Real Fruit Powder</span>,
-            <span key={`b${i}`} className="text-[var(--color-amber)]">✦</span>,
+            <span key={`b${i}`} className="text-[var(--color-cream)]">✦</span>,
             <span key={`c${i}`} className="text-sm font-medium tracking-wide">Expert-verified Formulas</span>,
-            <span key={`d${i}`} className="text-[var(--color-amber)]">✦</span>,
+            <span key={`d${i}`} className="text-[var(--color-cream)]">✦</span>,
             <span key={`e${i}`} className="text-sm font-medium tracking-wide">Snap. Add Water. Shake.</span>,
-            <span key={`f${i}`} className="text-[var(--color-amber)]">✦</span>,
+            <span key={`f${i}`} className="text-[var(--color-cream)]">✦</span>,
             <span key={`g${i}`} className="text-sm font-medium tracking-wide">Zero Artificial Anything</span>,
-            <span key={`h${i}`} className="text-[var(--color-amber)]">✦</span>,
+            <span key={`h${i}`} className="text-[var(--color-cream)]">✦</span>,
           ])}
         </div>
       </div>
