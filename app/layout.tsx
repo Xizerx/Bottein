@@ -8,27 +8,42 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: {
-    default: "Bottein — Your Protein. Personalized.",
-    template: "%s | Bottein",
+    default: "BOTTEIN",
+    template: "%s | BOTTEIN",
   },
   description:
-    "Science-backed, expert-formulated protein tailored to your goals. Real fruit powder, mix-and-match flavors, zero compromises.",
+    "Real fruit powder. Expert-formulated protein blends with zero artificial ingredients. Personalized to your goals — clean, precise, uncompromising.",
   metadataBase: new URL("https://bottein.ca"),
+  alternates: {
+    canonical: "https://bottein.ca",
+  },
   openGraph: {
-    title: "Bottein — Your Protein. Personalized.",
+    title: "BOTTEIN ✦ Your Protein. Personalized.",
     description:
-      "Science-backed, expert-formulated protein tailored to your goals.",
+      "Real fruit powder. Expert-formulated, zero artificial ingredients. Personalized to you.",
     url: "https://bottein.ca",
-    siteName: "Bottein",
+    siteName: "BOTTEIN",
     locale: "en_CA",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bottein — Your Protein. Personalized.",
+    title: "BOTTEIN ✦ Your Protein. Personalized.",
     description:
-      "Science-backed, expert-formulated protein tailored to your goals.",
+      "Real fruit powder. Expert-formulated, zero artificial ingredients. Personalized to you.",
   },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "BOTTEIN",
+  url: "https://bottein.ca",
+  description:
+    "Science-backed, personalized protein powder with real fruit flavours.",
+  foundingDate: "2024",
+  areaServed: "CA",
+  sameAs: ["https://instagram.com/bottein.ca"],
 };
 
 export default function RootLayout({
@@ -39,6 +54,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="bw">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
