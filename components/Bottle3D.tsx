@@ -11,6 +11,7 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 
+
 /* ── Real bottle specs ──────────────────────────────────────────────
    Height with cap:  6 3/8″ ≈ 162 mm
    Body:             square cross-section, clear PET
@@ -26,32 +27,6 @@ const CAP_R = 0.35; // cap radius (round)
 const CAP_H = 0.24;
 const SHOULDER_H = 0.2;
 
-/* ── BOTTEIN label tuning ────────────────────────────────────────────
-   Tweak these to reposition / resize the vertical "BOTTEIN" label on
-   the front face of the bottle. Positions are in world units (same as
-   BODY_W/H/D above). Z stays slightly in front of the front face.
-
-   ─ Coordinate reference ─
-     x:  left (−) ↔ right (+) on the bottle face
-     y:  bottom (−) ↔ top (+) on the bottle face
-     z:  sits just in front of the front face (BODY_D/2 + small offset)
-
-   distanceFactor → bigger number = SMALLER text on screen
-   fontSize       → raw text size before distanceFactor scaling
-   ──────────────────────────────────────────────────────────────────── */
-const LABEL_MOBILE = {
-  position: [BODY_W / 2 - 0.18, BODY_H / 2 - 0.75, BODY_D / 2 + 0.06] as [number, number, number],
-  distanceFactor: 4,
-  fontSize: "24px",
-  letterSpacing: "0.12em",
-};
-
-const LABEL_DESKTOP = {
-  position: [BODY_W / 2 - 0.25, BODY_H / 2 - 0.3, BODY_D / 2 + 0.06] as [number, number, number],
-  distanceFactor: 5,
-  fontSize: "20px",
-  letterSpacing: "0.1em",
-};
 
 // Flavors — each reload picks one at random
 const FLAVORS: { name: string; fruits: string[] }[] = [
@@ -68,13 +43,13 @@ const ADDONS = ["⚡", "✨", "💧"];
 // Pick a random flavor on each page load
 const chosenFlavor = FLAVORS[Math.floor(Math.random() * FLAVORS.length)];
 
-// Build emoji list: 5 protein, flavor fruits (1-3), 3 addons
-const fruitEmojis = chosenFlavor.fruits.map((f) => ({ char: f, size: 0.38 }));
-const proteinEmojis = Array.from({ length: 5 }, () => ({
+// Build emoji list: 2 protein, 2 fruit, 1 addon
+const fruitEmojis = chosenFlavor.fruits.slice(0, 2).map((f) => ({ char: f, size: 0.55 }));
+const proteinEmojis = Array.from({ length: 2 }, () => ({
   char: "🥛",
-  size: 0.38 + Math.random() * 0.04,
+  size: 0.55,
 }));
-const addonEmojis = ADDONS.map((a) => ({ char: a, size: 0.35 }));
+const addonEmojis = ADDONS.slice(0, 1).map((a) => ({ char: a, size: 0.52 }));
 
 // Order: protein at bottom, addons in middle, fruits on top
 const EMOJI_LIST = [
@@ -83,42 +58,25 @@ const EMOJI_LIST = [
   ...fruitEmojis,
 ];
 
-// Column-based stacking: place emojis in 3 columns, stack vertically
-// This prevents overlap while still looking natural
 const BOTTOM_Y = -BODY_H / 2 + 0.25;
-const STACK_SPACING = 0.34; // vertical gap between stacked emojis
 
 function generateStackedPositions() {
-  // 3 columns with slight random x offsets
-  const columns: { x: number; z: number; count: number }[] = [
-    { x: -0.25 + (Math.random() - 0.5) * 0.1, z: (Math.random() - 0.5) * 0.2, count: 0 },
-    { x: 0 + (Math.random() - 0.5) * 0.1, z: (Math.random() - 0.5) * 0.2, count: 0 },
-    { x: 0.25 + (Math.random() - 0.5) * 0.1, z: (Math.random() - 0.5) * 0.2, count: 0 },
+  // 5 fixed slots in a staggered 2-column layout — guaranteed no overlap.
+  // Vertical gap between same-column neighbours is 0.66 world units,
+  // well above the ~0.55 emoji size.
+  const slots = [
+    { x: -0.24, restY: -0.68 }, // left, bottom
+    { x:  0.24, restY: -0.35 }, // right, low-mid
+    { x: -0.24, restY: -0.02 }, // left, mid
+    { x:  0.24, restY:  0.31 }, // right, high-mid
+    { x:  0.00, restY:  0.64 }, // center, top
   ];
-
-  // Shuffle emoji indices for random column assignment
-  const indices = EMOJI_LIST.map((_, i) => i);
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-
-  const positions: { pos: [number, number, number]; restY: number }[] = new Array(EMOJI_LIST.length);
-
-  for (const idx of indices) {
-    // Pick the column with fewest emojis (distribute evenly)
-    const col = columns.reduce((a, b) => (a.count <= b.count ? a : b));
-    const restY = BOTTOM_Y + col.count * STACK_SPACING;
-    const x = col.x + (Math.random() - 0.5) * 0.06; // tiny jitter
-    const z = col.z + (Math.random() - 0.5) * 0.06;
-    positions[idx] = {
-      pos: [x, BOTTOM_Y + 2 + Math.random() * 1.5, z],
-      restY,
-    };
-    col.count++;
-  }
-
-  return positions;
+  // Shuffle slot assignment so emoji order varies each page load
+  const shuffled = [...slots].sort(() => Math.random() - 0.5);
+  return shuffled.map((slot) => ({
+    pos: [slot.x, BOTTOM_Y + 2 + Math.random() * 1.5, (Math.random() - 0.5) * 0.15] as [number, number, number],
+    restY: slot.restY,
+  }));
 }
 
 const INITIAL_POSITIONS = generateStackedPositions();
@@ -131,24 +89,9 @@ const EMOJIS = EMOJI_LIST.map((e, i) => ({
 }));
 
 
-// Detects whether the viewport is below the `lg` Tailwind breakpoint (1024px).
-// Drives which LABEL_* config is used for the BOTTEIN label.
-// NOTE: intentionally captured ONCE on mount — we don't listen to resize.
-// Re-switching the label config mid-resize causes a visible jump between
-// LABEL_MOBILE and LABEL_DESKTOP, so we lock it to the initial viewport.
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    setIsMobile(window.matchMedia("(max-width: 1023px)").matches);
-  }, []);
-  return isMobile;
-}
-
 function BottleModel() {
   const groupRef = useRef<THREE.Group>(null!);
   const [scrollY, setScrollY] = useState(0);
-  const isMobile = useIsMobile();
-  const label = isMobile ? LABEL_MOBILE : LABEL_DESKTOP;
 
   useEffect(() => {
     // rAF-throttled — avoids a setState on every scroll event, which on
@@ -302,32 +245,9 @@ function BottleModel() {
 
       {/* ── Fruit & protein emojis with gravity ── */}
       {EMOJIS.map((emoji, i) => (
-        <FallingEmoji key={`emoji-${i}`} emoji={emoji} index={i} scrollY={scrollY} />
+        <FallingEmoji key={`emoji-${i}`} emoji={emoji} scrollY={scrollY} />
       ))}
 
-      {/* ── BOTTEIN label ── (config in LABEL_MOBILE / LABEL_DESKTOP at top of file) */}
-      <group position={label.position}>
-        <Html
-          center
-          transform
-          distanceFactor={label.distanceFactor}
-          zIndexRange={[10, 10]}
-          rotation={[0, 0, -Math.PI / 2]}
-          style={{
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 800,
-            fontSize: label.fontSize,
-            letterSpacing: label.letterSpacing,
-            color: "#111111",
-            userSelect: "none",
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-            lineHeight: 1,
-          }}
-        >
-          BOTTEIN
-        </Html>
-      </group>
 
       {/* ── Bottom edge ── */}
       <RoundedBox
@@ -348,10 +268,10 @@ function BottleModel() {
   );
 }
 
-function FallingEmoji({ emoji, index, scrollY }: { emoji: typeof EMOJIS[0]; index: number; scrollY: number }) {
+function FallingEmoji({ emoji, scrollY }: { emoji: typeof EMOJIS[0]; scrollY: number }) {
   const ref = useRef<THREE.Group>(null!);
   const velocity = useRef(0);
-  const posY = useRef(emoji.pos[1]); // start from random high position
+  const posY = useRef(emoji.pos[1]);
   const settled = useRef(false);
   const lastScrollY = useRef(0);
   const bobOffset = useRef(Math.random() * Math.PI * 2);
@@ -361,12 +281,10 @@ function FallingEmoji({ emoji, index, scrollY }: { emoji: typeof EMOJIS[0]; inde
   useFrame((state, delta) => {
     if (!ref.current) return;
 
-    // Detect scroll change and add bounce impulse
     const scrollDelta = Math.abs(scrollY - lastScrollY.current);
     lastScrollY.current = scrollY;
     if (settled.current && scrollDelta > 2) {
-      const impulse = Math.min(scrollDelta * 0.004, 0.8) * (0.5 + Math.random() * 0.5);
-      velocity.current = impulse;
+      velocity.current = Math.min(scrollDelta * 0.004, 0.8) * (0.5 + Math.random() * 0.5);
       settled.current = false;
     }
 
@@ -381,7 +299,6 @@ function FallingEmoji({ emoji, index, scrollY }: { emoji: typeof EMOJIS[0]; inde
           velocity.current = 0;
         }
       }
-      // Cap at top of bottle
       if (posY.current > BODY_H / 2 - 0.2) {
         posY.current = BODY_H / 2 - 0.2;
         velocity.current *= -0.5;

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 const Bottle3D = dynamic(() => import("@/components/Bottle3D"), {
   ssr: false,
-  loading: () => <div style={{ width: 280, height: 420 }} />,
+  loading: () => <div style={{ width: 360, height: 600 }} />,
 });
 
 // ── Intersection-observer hook for reveal animations ──────────────────────
@@ -93,166 +93,6 @@ function ScrollCue() {
   );
 }
 
-function BottleIllustration() {
-  const bottleRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = bottleRef.current;
-    if (!el) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      el.style.transform = `rotateY(${window.scrollY * 0.4}deg)`;
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-  return (
-    <div
-      className="relative flex items-center justify-center select-none"
-      style={{ perspective: "700px" }}
-    >
-      <div ref={bottleRef} style={{ transformStyle: "preserve-3d", willChange: "transform" }}>
-        <svg
-          viewBox="0 0 100 165"
-          width="240"
-          height="396"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <defs>
-            <clipPath id="bottleInterior">
-              <rect x="15" y="34" width="70" height="114" rx="2" />
-            </clipPath>
-            <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#aaa" />
-              <stop offset="100%" stopColor="#888" />
-            </linearGradient>
-            <linearGradient id="shoulderGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
-            </linearGradient>
-          </defs>
-
-          {/* Cap */}
-          <rect x="32" y="8" width="36" height="15" rx="2" fill="url(#capGrad)" />
-          <rect x="30" y="21" width="40" height="8" rx="1.5" fill="#999" />
-
-          {/* Shoulder taper */}
-          <path
-            d="M30 29 L15 34 L85 34 L70 29 Z"
-            fill="rgba(200,137,58,0.12)"
-            stroke="var(--bottle-stroke)"
-            strokeWidth="1"
-          />
-
-          {/* Bottle body */}
-          <rect
-            x="15"
-            y="34"
-            width="70"
-            height="114"
-            rx="2"
-            fill="rgba(255,255,255,0.07)"
-            stroke="var(--bottle-stroke)"
-            strokeWidth="1.5"
-          />
-
-          {/* Liquid fill - animated */}
-          <g clipPath="url(#bottleInterior)">
-            <rect
-              className="liquid-fill"
-              x="15"
-              y="57"
-              width="70"
-              height="91"
-              fill="var(--bottle-liquid)"
-            />
-            {/* Liquid surface shimmer line */}
-            <rect x="15" y="57" width="70" height="2" rx="1" fill="var(--bottle-liquid)" opacity="0.6" />
-          </g>
-
-          {/* Shoulder highlight shimmer */}
-          <rect
-            className="bottle-shimmer"
-            x="20"
-            y="35"
-            width="7"
-            height="55"
-            rx="3.5"
-            fill="var(--bottle-shimmer)"
-          />
-
-          {/* Label area */}
-          <rect
-            x="21"
-            y="62"
-            width="58"
-            height="58"
-            rx="1.5"
-            fill="rgba(255,255,255,0.05)"
-            stroke="var(--bottle-stroke)"
-            strokeWidth="0.5"
-          />
-
-          {/* Label text */}
-          <text
-            x="50"
-            y="88"
-            textAnchor="middle"
-            fontFamily="Inter, system-ui, sans-serif"
-            fontSize="7.5"
-            fontWeight="700"
-            fill="var(--bottle-stroke)"
-            letterSpacing="2.5"
-          >
-            BOTTEIN
-          </text>
-          <text
-            x="50"
-            y="98"
-            textAnchor="middle"
-            fontFamily="Inter, system-ui, sans-serif"
-            fontSize="4"
-            fill="var(--bottle-stroke)"
-            letterSpacing="0.8"
-            opacity="0.75"
-          >
-            PROTEIN  16 FL OZ
-          </text>
-          <line x1="28" y1="103" x2="72" y2="103" stroke="var(--bottle-stroke)" strokeWidth="0.4" opacity="0.4" />
-          <text
-            x="50"
-            y="110"
-            textAnchor="middle"
-            fontFamily="Inter, system-ui, sans-serif"
-            fontSize="3.5"
-            fill="var(--bottle-stroke)"
-            letterSpacing="0.5"
-            opacity="0.55"
-          >
-            Snap. Add Water. Shake.
-          </text>
-
-          {/* Horizontal grip lines */}
-          <line x1="15" y1="128" x2="85" y2="128" stroke="var(--bottle-stroke)" strokeWidth="0.4" opacity="0.2" />
-          <line x1="15" y1="133" x2="85" y2="133" stroke="var(--bottle-stroke)" strokeWidth="0.4" opacity="0.2" />
-
-          {/* Bottom edge */}
-          <rect x="15" y="146" width="70" height="4" rx="2" fill="rgba(200,137,58,0.12)" />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 const steps = [
   {
@@ -336,6 +176,71 @@ const testimonials = [
     role: "Marketing lead, 24",
   },
 ];
+
+// ── Marquee band ─────────────────────────────────────────────────────────
+// Uses requestAnimationFrame instead of CSS animation so the scroll is
+// pixel-perfect — CSS `translateX(-50%)` can land on a sub-pixel boundary
+// at the loop point and produce a 1px jump. RAF moves by an exact integer
+// each frame and resets at the precise halfway point of the track.
+const MARQUEE_ITEMS = [
+  { key: "a", text: "Real Fruit Powder" },
+  { key: "b", text: "✦", accent: true },
+  { key: "c", text: "Expert-verified Formulas" },
+  { key: "d", text: "✦", accent: true },
+  { key: "e", text: "Snap. Add Water. Shake." },
+  { key: "f", text: "✦", accent: true },
+  { key: "g", text: "Zero Artificial Anything" },
+  { key: "h", text: "✦", accent: true },
+];
+
+function MarqueeBand() {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const xRef = useRef(0);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+
+    const tick = () => {
+      xRef.current -= 0.75; // px per frame (~45px/s at 60fps)
+      // Reset by exactly half the track width — the two copies are identical
+      // so the content looks continuous with zero visible jump.
+      const half = el.scrollWidth / 2;
+      if (xRef.current <= -half) xRef.current += half;
+      el.style.transform = `translateX(${xRef.current}px)`;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  return (
+    <div className="bg-[var(--color-ink)] text-[var(--color-cream)] py-4 overflow-hidden">
+      {/* Two identical copies side by side. The RAF loop moves the track left
+          and snaps back by exactly one copy's width — seamless every time. */}
+      <div ref={trackRef} className="flex items-center whitespace-nowrap will-change-transform">
+        {[0, 1].map((copy) => (
+          <div key={copy} className="flex items-center gap-16 pr-16" aria-hidden={copy > 0}>
+            {/* 3 repetitions per copy guarantee each copy is wider than any
+                viewport, so there's never empty space on initial render */}
+            {[0, 1, 2].flatMap((rep) =>
+              MARQUEE_ITEMS.map(({ key, text, accent }) => (
+                <span
+                  key={`${rep}-${key}`}
+                  className={`text-sm font-medium tracking-wide${accent ? " text-white" : ""}`}
+                >
+                  {text}
+                </span>
+              ))
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const [heroVisible, setHeroVisible] = useState(false);
@@ -515,23 +420,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Marquee / ticker ──────────────────────────────────────────── */}
-      <div className="bg-[var(--color-ink)] text-[var(--color-cream)] py-4 overflow-hidden">
-        <div
-          className="marquee-track flex items-center gap-16 whitespace-nowrap"
-          style={{ animation: "ticker 12s linear infinite" }}
-        >
-          {Array.from({ length: 6 }).flatMap((_, i) => [
-            <span key={`a${i}`} className="text-sm font-medium tracking-wide">Real Fruit Powder</span>,
-            <span key={`b${i}`} className="text-[var(--color-cream)]">✦</span>,
-            <span key={`c${i}`} className="text-sm font-medium tracking-wide">Expert-verified Formulas</span>,
-            <span key={`d${i}`} className="text-[var(--color-cream)]">✦</span>,
-            <span key={`e${i}`} className="text-sm font-medium tracking-wide">Snap. Add Water. Shake.</span>,
-            <span key={`f${i}`} className="text-[var(--color-cream)]">✦</span>,
-            <span key={`g${i}`} className="text-sm font-medium tracking-wide">Zero Artificial Anything</span>,
-            <span key={`h${i}`} className="text-[var(--color-cream)]">✦</span>,
-          ])}
-        </div>
-      </div>
+      <MarqueeBand />
 
       {/* ── How it works ──────────────────────────────────────────────── */}
       <section className="py-24 md:py-32 bg-[var(--color-cream)]">
@@ -572,7 +461,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ──────────────────────────────────────────────────── */}
-      <section className="py-24 md:py-32 bg-[var(--color-ink)]">
+      <section data-nav-dark className="py-24 md:py-32 bg-[var(--color-ink)]">
         <div className="container-site">
           <Reveal className="mb-16">
             <p className="section-label mb-3 text-white/40">Why Bottein</p>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "./CartProvider";
 
 const links = [
@@ -11,82 +12,101 @@ const links = [
   { href: "/builder", label: "Builder" },
 ];
 
-const announcementItems = [
-  "Real fruit. Real protein. Coming soon.",
-  "•",
-  "Early access open",
-  "•",
-  "Real fruit. Real protein. Coming soon.",
-  "•",
-  "Early access open",
-  "•",
+const announcements = [
+  "\u00A0\u00A0\u00A0\u00A0Real fruit. Real protein. Coming soon.\u00A0\u00A0\u00A0\u00A0",
+  "\u00A0\u00A0\u00A0\u00A0Early access open — join the waitlist.\u00A0\u00A0\u00A0\u00A0",
+  "\u00A0\u00A0\u00A0\u00A0Build your formula. No compromises.\u00A0\u00A0\u00A0\u00A0",
 ];
 
 export default function Nav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [msgIndex, setMsgIndex] = useState(0);
   const { totals } = useCart();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const NAV_H = 96; // announcement bar (~32px) + main nav (~64px)
+    const update = () => {
+      const y = window.scrollY;
+      setScrolled(y > 20);
+      // Check if any [data-nav-dark] section is currently behind the nav
+      const darkSections = document.querySelectorAll("[data-nav-dark]");
+      let dark = false;
+      darkSections.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < NAV_H && rect.bottom > 0) dark = true;
+      });
+      setIsDark(dark);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
   }, []);
 
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % announcements.length);
+    }, 3500);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       {/* ── Announcement bar ── */}
-      <div className="announcement-bar bg-[var(--color-cream)] border-b border-[var(--color-amber)] py-2 overflow-hidden">
-        <div
-          className="flex gap-10 whitespace-nowrap text-xs font-medium tracking-wide text-[var(--color-ink)]"
-          style={{ animation: "ticker var(--ticker-duration, 20s) linear infinite" }}
-        >
-          {Array.from({ length: 8 }).flatMap((_, i) =>
-            announcementItems.map((item, j) => (
-              <span
-                key={`${i}-${j}`}
-                className={item === "•" ? "text-[var(--color-amber)]" : ""}
-              >
-                {item}
-              </span>
-            ))
-          )}
-        </div>
+      {/* overflow-hidden clips the entering/exiting text outside the bar height */}
+      {/* relative here is critical — it makes the absolute span position
+          against this bar, not the header. overflow-hidden clips the slide. */}
+      <div className="relative bg-[var(--color-ink)] py-2 overflow-hidden flex items-center justify-center h-8">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={msgIndex}
+            initial={{ y: 16, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -16, opacity: 0 }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="absolute text-xs font-medium tracking-wide text-[var(--color-cream)]"
+          >
+            {announcements[msgIndex]}
+          </motion.span>
+        </AnimatePresence>
       </div>
 
       {/* ── Main nav ── */}
       <div
         className={`transition-all duration-300 ${
           scrolled
-            ? "bg-[var(--color-cream)]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(0,0,0,0.06)]"
+            ? isDark
+              ? "bg-[var(--color-ink)]/90 backdrop-blur-sm"
+              : "bg-[var(--color-cream)]/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(0,0,0,0.06)]"
             : "bg-transparent"
         }`}
       >
-        <div className="container-site flex items-center justify-between h-16 md:h-18">
-          {/* Logo */}
+        <div className="container-site grid grid-cols-3 items-center h-16 md:h-18">
+          {/* Col 1: Logo */}
           <Link
             href="/"
-            className="text-2xl font-bold tracking-tight text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors"
+            className={`text-2xl font-bold tracking-tight transition-colors duration-300 hover:text-[var(--color-amber)] ${
+              isDark ? "text-white" : "text-[var(--color-ink)]"
+            }`}
             style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
           >
             BOTTEIN
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/* Col 2: Desktop nav */}
+          <nav className="hidden md:flex items-center justify-center gap-8">
             {links.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={`text-sm font-medium transition-colors ${
-                  pathname === href
-                    ? "text-[var(--color-amber)]"
-                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                className={`text-sm font-medium transition-colors duration-300 ${
+                  isDark ? "text-white" : "text-[var(--color-ink)]"
                 }`}
               >
                 {label}
@@ -94,11 +114,11 @@ export default function Nav() {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Col 3: Cart + mobile hamburger */}
+          <div className={`flex items-center justify-end gap-2 transition-colors duration-300 ${isDark ? "text-white" : "text-[var(--color-ink)]"}`}>
             <Link
               href="/cart"
-              className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 transition-colors"
+              className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors"
               aria-label={`Cart (${totals.itemCount} items)`}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -112,10 +132,6 @@ export default function Nav() {
                 </span>
               )}
             </Link>
-            <Link href="/quiz" className="btn-primary text-xs px-5 py-2.5">
-              Build Yours
-            </Link>
-          </div>
 
           {/* Mobile hamburger */}
           <button
@@ -125,21 +141,22 @@ export default function Nav() {
             aria-expanded={menuOpen}
           >
             <span
-              className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
+              className={`block h-0.5 transition-all duration-200 ${isDark ? "bg-white" : "bg-[var(--color-ink)]"} ${
                 menuOpen ? "w-5 translate-y-2 rotate-45" : "w-5"
               }`}
             />
             <span
-              className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
+              className={`block h-0.5 transition-all duration-200 ${isDark ? "bg-white" : "bg-[var(--color-ink)]"} ${
                 menuOpen ? "w-0 opacity-0" : "w-4"
               }`}
             />
             <span
-              className={`block h-0.5 bg-[var(--color-ink)] transition-all duration-200 ${
+              className={`block h-0.5 transition-all duration-200 ${isDark ? "bg-white" : "bg-[var(--color-ink)]"} ${
                 menuOpen ? "w-5 -translate-y-2 -rotate-45" : "w-5"
               }`}
             />
           </button>
+          </div>
         </div>
       </div>
 
