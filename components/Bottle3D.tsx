@@ -281,16 +281,22 @@ function FallingEmoji({ emoji, scrollY }: { emoji: typeof EMOJIS[0]; scrollY: nu
   useFrame((state, delta) => {
     if (!ref.current) return;
 
+    // Clamp delta to prevent physics explosion on first frame after canvas resumes
+    // (frameloop="never" → "always" can have delta = wall-clock time of entire pause)
+    const dt = Math.min(delta, 0.05);
+
     const scrollDelta = Math.abs(scrollY - lastScrollY.current);
     lastScrollY.current = scrollY;
-    if (settled.current && scrollDelta > 2) {
+    // Ignore large deltas caused by canvas resuming after pause — those are
+    // accumulated scroll position jumps, not real per-frame scroll velocity.
+    if (settled.current && scrollDelta > 2 && scrollDelta < 40) {
       velocity.current = Math.min(scrollDelta * 0.004, 0.8) * (0.5 + Math.random() * 0.5);
       settled.current = false;
     }
 
     if (!settled.current) {
-      velocity.current -= 3.5 * delta;
-      posY.current += velocity.current * delta;
+      velocity.current -= 3.5 * dt;
+      posY.current += velocity.current * dt;
       if (posY.current <= restY) {
         posY.current = restY;
         velocity.current *= -0.25;

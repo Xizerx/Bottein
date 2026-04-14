@@ -87,7 +87,7 @@ export default function Nav() {
             : "bg-transparent"
         }`}
       >
-        <div className="container-site grid grid-cols-3 items-center h-16 md:h-18">
+        <div className="container-site flex items-center justify-between md:grid md:grid-cols-3 h-16 md:h-18">
           {/* Col 1: Logo */}
           <Link
             href="/"

@@ -387,7 +387,7 @@ export default function LandingPage() {
 
             {/* ── Right: bottle ── */}
             {/* Outer: sticky on mobile (transform must NOT be here — it breaks sticky) */}
-            <div className="order-1 lg:order-2 lg:flex lg:items-center lg:justify-center bottle-sticky-mobile">
+            <div className="order-1 lg:order-2 lg:flex lg:items-center lg:justify-center bottle-sticky-mobile flex items-center justify-center min-h-[calc(100svh-112px)] lg:min-h-0">
               {/* Scroll-linked fade + light blur (mobile only; values are 0 on desktop).
                   Blur capped at 6px — larger radii tank compositor perf on phones. */}
               <div
