@@ -56,6 +56,7 @@ export default function RootLayout({
       {/* noinspection HtmlRequiredTitleElement */}
       <html lang="en" className="bw">
         <head>
+          <title>BOTTEIN</title>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
