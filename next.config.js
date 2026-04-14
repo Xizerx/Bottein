@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
+  transpilePackages: ["@react-three/fiber", "@react-three/drei", "three"],
   async headers() {
     return [
       {

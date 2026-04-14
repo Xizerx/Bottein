@@ -339,7 +339,7 @@ export default function Bottle3D({ paused = false }: { paused?: boolean }) {
       <Canvas
         camera={{ position: [0, 0, 7.5], fov: 28 }}
         style={{ touchAction: "pan-y" }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         // Lower pixel ratio ceiling — transmission + clearcoat at 2x dpr
         // is the biggest GPU cost on mobile, and the bottle is blurred/small
         // enough that 1.5x looks identical to 2x.
