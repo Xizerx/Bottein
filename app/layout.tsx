@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BOTTEIN ✦ Your Protein. Personalized.",
+      title: "BOTTEIN ✦ Your Protein. Personalized.",
     description:
       "Real fruit powder. Expert-formulated, zero artificial ingredients. Personalized to you.",
   },
@@ -52,32 +52,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bw">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-screen flex flex-col">
-        <CartProvider>
-          <Nav />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </CartProvider>
-        <Analytics />
-        <SpeedInsights />
-      </body>
-    </html>
+    <>
+      {/* noinspection HtmlRequiredTitleElement */}
+      <html lang="en" className="bw">
+        <head>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+          />
+        </head>
+        <body className="min-h-screen flex flex-col">
+          <CartProvider>
+            <Nav />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </CartProvider>
+          <Analytics />
+          <SpeedInsights />
+        </body>
+      </html>
+    </>
   );
 }
