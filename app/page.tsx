@@ -203,7 +203,7 @@ function MarqueeBand() {
     if (!el) return;
 
     const tick = () => {
-      xRef.current -= 0.75; // px per frame (~45px/s at 60fps)
+      xRef.current -= 0.45; // px per frame (~27px/s at 60fps)
       // Reset by exactly half the track width — the two copies are identical
       // so the content looks continuous with zero visible jump.
       const half = el.scrollWidth / 2;
@@ -360,6 +360,7 @@ export default function LandingPage() {
                 <Link href="/quiz" className="btn-primary text-sm">
                   Build Yours
                 </Link>
+                {/* noinspection HtmlUnknownAnchorTarget */}
                 <a href="#waitlist" className="btn-outline text-sm">
                   Join Waitlist
                 </a>
@@ -387,7 +388,7 @@ export default function LandingPage() {
 
             {/* ── Right: bottle ── */}
             {/* Outer: sticky on mobile (transform must NOT be here — it breaks sticky) */}
-            <div className="order-1 lg:order-2 lg:flex lg:items-center lg:justify-center bottle-sticky-mobile flex items-center justify-center min-h-[calc(100svh-112px)] lg:min-h-0">
+            <div className="order-1 lg:order-2 lg:flex lg:items-center lg:justify-center bottle-sticky-mobile flex items-center justify-center min-h-[calc(100svh-112px)] lg:min-h-0 pb-16 lg:pb-0">
               {/* Scroll-linked fade + light blur (mobile only; values are 0 on desktop).
                   Blur capped at 6px — larger radii tank compositor perf on phones. */}
               <div
@@ -567,6 +568,35 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Mobile scroll indicator ───────────────────────────────────
+          Fixed so it sits at the viewport bottom regardless of the sticky
+          bottle container's mask. Fades out as soon as scrolling starts
+          (bottleFade × 3 → fully hidden by ~33% of the fade travel). */}
+      <div
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 lg:hidden pointer-events-none z-40"
+        style={{ opacity: Math.max(1 - bottleFade * 3, 0) }}
+      >
+        <span className="text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-muted)]">
+          Scroll
+        </span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          style={{ color: "var(--color-ink-muted)" }}
+          className="animate-bounce"
+        >
+          <path
+            d="M2 5l6 6 6-6"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
 
       {/* ── Waitlist ──────────────────────────────────────────────────── */}
       <section id="waitlist" className="waitlist-section py-24 md:py-32 bg-[var(--color-amber)] text-[var(--color-ink)]">
